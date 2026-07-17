@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PME Scout</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+#pme-scout-root {
+  --ink: #1B2330;
+  --ink-soft: #2E3A4A;
+  --paper: #ECE6D5;
+  --paper-deep: #DCD3B8;
+  --paper-light: #F8F4E9;
+  --brass: #A9803D;
+  --brass-light: #C9A360;
+  --brass-dim: #8C6A2E;
+  --forest: #3F6156;
+  --forest-bg: #E1E8E1;
+  --vermillion: #A63D40;
+  --vermillion-bg: #F1DEDD;
+  --amber-bg: #F1E6C9;
+  --slate: #6B7280;
+  --line: rgba(27,35,48,0.15);
+  --line-strong: rgba(27,35,48,0.28);
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100vh;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.5;
+}
+#pme-scout-root * { box-sizing: border-box; }
+#pme-scout-root .serif { font-family: 'Fraunces', Georgia, serif; }
+#pme-scout-root .mono { font-family: 'IBM Plex Mono', monospace; }
+
+#pme-scout-root .bg-texture {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(27,35,48,0.025) 0px, transparent 1px, transparent 3px),
+    repeating-linear-gradient(90deg, rgba(27,35,48,0.015) 0px, transparent 1px, transparent 3px);
+}
+
+#pme-scout-root .shell { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0 20px 60px; }
+
+/* HEADER */
+#pme-scout-root .masthead {
+  background: var(--ink); color: var(--paper-light);
+  border-bottom: 3px solid var(--brass);
+  padding: 22px 24px;
+  margin-bottom: 0;
+}
+#pme-scout-root .masthead-inner { max-width: 1180px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
+#pme-scout-root .wordmark { font-family: 'Fraunces', serif; font-weight: 600; font-size: 27px; letter-spacing: 0.3px; }
+#pme-scout-root .wordmark span { color: var(--brass-light); font-style: italic; }
+#pme-scout-root .tagline { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--paper-deep); opacity: 0.75; margin-top: 4px; }
+#pme-scout-root .masthead-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--paper-deep); opacity: 0.8; text-align: right; }
+
+/* TABS */
+#pme-scout-root .tabbar { display: flex; gap: 4px; margin: 22px 0 26px; border-bottom: 2px solid var(--line-strong); overflow-x: auto; }
+#pme-scout-root .tab-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase;
+  background: var(--paper-deep); color: var(--ink-soft); border: 1px solid var(--line-strong); border-bottom: none;
+  padding: 10px 18px 9px; cursor: pointer; border-radius: 6px 6px 0 0; white-space: nowrap;
+  position: relative; top: 2px; opacity: 0.75; transition: all .15s;
+}
+#pme-scout-root .tab-btn:hover { opacity: 1; }
+#pme-scout-root .tab-btn.active { background: var(--paper-light); color: var(--ink); opacity: 1; font-weight: 600; border-bottom: 2px solid var(--paper-light); top: 2px; }
+#pme-scout-root .tab-count { display:inline-block; background: var(--brass); color: var(--paper-light); border-radius: 10px; padding: 0 6px; font-size: 10px; margin-left: 6px; }
+
+/* SECTION HEADERS */
+#pme-scout-root h2.section-title { font-family:'Fraunces',serif; font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+#pme-scout-root .section-sub { color: var(--slate); font-size: 13px; margin-bottom: 18px; }
+#pme-scout-root .eyebrow { font-family:'IBM Plex Mono',monospace; font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--brass-dim); margin-bottom: 6px; }
+
+/* INFO BANNER */
+#pme-scout-root .info-banner {
+  background: var(--paper-light); border: 1px solid var(--line-strong); border-left: 4px solid var(--brass);
+  border-radius: 4px; padding: 13px 16px; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.55;
+}
+#pme-scout-root .info-banner b { color: var(--ink); }
+
+/* SEARCH LAUNCH BOX */
+#pme-scout-root .launch-box { background: var(--paper-light); border: 1px solid var(--line-strong); border-radius: 8px; padding: 20px; margin-bottom: 28px; box-shadow: 0 1px 0 var(--line); }
+#pme-scout-root textarea.guidance {
+  width: 100%; min-height: 64px; resize: vertical; font-family: 'Inter', sans-serif; font-size: 13px;
+  border: 1px solid var(--line-strong); border-radius: 5px; padding: 10px 12px; background: #fff; color: var(--ink);
+}
+#pme-scout-root textarea.guidance:focus { outline: 2px solid var(--brass-light); outline-offset: 1px; }
+#pme-scout-root .launch-row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+
+/* BUTTONS */
+#pme-scout-root button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 5px; font-size: 13px; font-weight: 600; padding: 9px 16px; border: 1px solid transparent; transition: all .12s; }
+#pme-scout-root button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+#pme-scout-root .btn-primary { background: var(--ink); color: var(--paper-light); }
+#pme-scout-root .btn-primary:hover { background: var(--ink-soft); }
+#pme-scout-root .btn-brass { background: var(--brass); color: #fff; }
+#pme-scout-root .btn-brass:hover { background: var(--brass-dim); }
+#pme-scout-root .btn-outline { background: transparent; border-color: var(--line-strong); color: var(--ink); }
+#pme-scout-root .btn-outline:hover { background: var(--paper-deep); }
+#pme-scout-root .btn-danger { background: transparent; border-color: var(--vermillion); color: var(--vermillion); }
+#pme-scout-root .btn-danger:hover { background: var(--vermillion-bg); }
+#pme-scout-root .btn-sm { padding: 6px 11px; font-size: 12px; }
+#pme-scout-root button:disabled { opacity: 0.45; cursor: not-allowed; }
+#pme-scout-root .btn-link { background: none; border: none; color: var(--brass-dim); text-decoration: underline; padding: 2px 0; font-weight: 500; }
+
+/* CARDS (dossiers) */
+#pme-scout-root .card-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+#pme-scout-root .dossier {
+  background: var(--paper-light); border: 1px solid var(--line-strong); border-radius: 8px; padding: 0; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(27,35,48,0.06); position: relative;
+}
+#pme-scout-root .dossier.top-pick { border-color: var(--brass); box-shadow: 0 2px 8px rgba(169,128,61,0.18); }
+#pme-scout-root .dossier-head { padding: 16px 18px 12px; border-bottom: 1px dashed var(--line-strong); display: flex; justify-content: space-between; gap: 14px; }
+#pme-scout-root .dossier-ref { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--slate); letter-spacing: 0.5px; }
+#pme-scout-root .dossier-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin: 3px 0 4px; line-height: 1.25; }
+#pme-scout-root .dossier-loc { font-size: 12.5px; color: var(--slate); }
+#pme-scout-root .stamp {
+  flex-shrink: 0; border: 2px solid var(--forest); color: var(--forest); border-radius: 6px;
+  padding: 6px 10px; font-family:'IBM Plex Mono',monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  transform: rotate(3deg); text-align: center; white-space: nowrap; height: fit-content;
+}
+#pme-scout-root .stamp.warn { border-color: var(--vermillion); color: var(--vermillion); transform: rotate(-2deg); }
+#pme-scout-root .stamp .stamp-big { font-size: 15px; display:block; }
+#pme-scout-root .top-pick-flag { position:absolute; top:0; right:22px; background: var(--brass); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; padding: 3px 10px; border-radius: 0 0 5px 5px; text-transform:uppercase; }
+
+#pme-scout-root .dossier-body { padding: 16px 18px; }
+#pme-scout-root .pitch { font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin-bottom: 14px; }
+
+#pme-scout-root .figures-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; margin-bottom: 16px; }
+#pme-scout-root .figure { background: var(--paper); border: 1px solid var(--line); border-radius: 5px; padding: 8px 10px; }
+#pme-scout-root .figure-label { font-family:'IBM Plex Mono',monospace; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--slate); margin-bottom: 3px; }
+#pme-scout-root .figure-value { font-family:'IBM Plex Mono',monospace; font-size: 15px; font-weight: 600; color: var(--ink); }
+#pme-scout-root .figure-note { font-size: 10.5px; color: var(--slate); margin-top: 2px; line-height:1.3; }
+
+#pme-scout-root .criteria-list { list-style: none; margin: 0 0 14px; padding: 0; }
+#pme-scout-root .criteria-list li { display: flex; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; align-items: flex-start; }
+#pme-scout-root .criteria-list li:last-child { border-bottom: none; }
+#pme-scout-root .chip { flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px; padding: 2px 7px; border-radius: 3px; margin-top: 1px; white-space: nowrap; }
+#pme-scout-root .chip-ok { background: var(--forest-bg); color: var(--forest); }
+#pme-scout-root .chip-check { background: var(--amber-bg); color: var(--brass-dim); }
+#pme-scout-root .chip-warn { background: var(--vermillion-bg); color: var(--vermillion); }
+#pme-scout-root .crit-text b { color: var(--ink); }
+#pme-scout-root .crit-text { color: var(--ink-soft); }
+
+#pme-scout-root .vigilance-box { background: var(--vermillion-bg); border-left: 3px solid var(--vermillion); border-radius: 4px; padding: 10px 12px; margin-bottom: 14px; }
+#pme-scout-root .vigilance-box.positive { background: var(--forest-bg); border-left-color: var(--forest); }
+#pme-scout-root .vigilance-box.positive .v-title { color: var(--forest); }
+#pme-scout-root .vigilance-box .v-title { font-family:'IBM Plex Mono',monospace; font-size: 10px; text-transform:uppercase; letter-spacing:0.6px; color: var(--vermillion); font-weight:700; margin-bottom:4px; }
+#pme-scout-root .vigilance-box div.v-item { font-size: 12px; color: var(--ink-soft); margin-bottom: 2px; }
+#pme-scout-root .fin-table input.fin-input { width:100%; border:1px solid var(--line-strong); border-radius:4px; padding:5px 7px; font-family:'IBM Plex Mono',monospace; font-size:12px; background:#fff; }
+#pme-scout-root .fin-table tr.fin-computed td { background: var(--paper-deep); }
+#pme-scout-root .fin-table tr.fin-computed.fin-warn td:last-child { color: var(--vermillion); }
+#pme-scout-root .fin-table th { white-space: nowrap; }
+#pme-scout-root .fin-dossier { margin-bottom: 22px; }
+#pme-scout-root .fin-note { font-size:11.5px; color:var(--slate); margin: 4px 0 10px; line-height:1.5; }
+#pme-scout-root textarea.notes-box { width:100%; min-height:56px; border:1px dashed var(--line-strong); border-radius:5px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:12.5px; background:var(--paper-light); margin-bottom:12px; resize:vertical; }
+
+#pme-scout-root .source-line { font-size: 11px; color: var(--slate); margin-bottom: 14px; }
+#pme-scout-root .source-line a { color: var(--brass-dim); }
+
+#pme-scout-root .dossier-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* GROUPS / TAGS */
+#pme-scout-root .tag { display:inline-block; background: var(--paper-deep); color: var(--ink-soft); font-size: 10.5px; font-family:'IBM Plex Mono',monospace; padding: 2px 8px; border-radius: 10px; margin: 0 5px 5px 0; }
+#pme-scout-root .tag.active { background: var(--ink); color: var(--paper-light); }
+#pme-scout-root .group-filter-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; align-items:center; }
+#pme-scout-root .group-filter-row button.tag-btn { border:1px solid var(--line-strong); background: var(--paper-light); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 11px; border-radius: 12px; color: var(--ink-soft); }
+#pme-scout-root .group-filter-row button.tag-btn.active { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+#pme-scout-root select.status-select { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; border-radius:12px; padding:4px 10px; border:1px solid var(--line-strong); background:var(--paper-light); color:var(--ink-soft); }
+#pme-scout-root select.status-select.status-a_contacter, #pme-scout-root button.tag-btn.status-a_contacter.active { background: var(--brass); color:#fff; border-color:var(--brass); }
+#pme-scout-root select.status-select.status-contact_pris, #pme-scout-root button.tag-btn.status-contact_pris.active { background: var(--amber-bg); color:var(--brass-dim); border-color:var(--brass-light); }
+#pme-scout-root select.status-select.status-negociation, #pme-scout-root button.tag-btn.status-negociation.active { background: var(--forest); color:#fff; border-color:var(--forest); }
+#pme-scout-root select.status-select.status-acquis, #pme-scout-root button.tag-btn.status-acquis.active { background: var(--ink); color:#fff; border-color:var(--ink); }
+#pme-scout-root select.status-select.status-abandonne, #pme-scout-root button.tag-btn.status-abandonne.active { background: var(--slate); color:#fff; border-color:var(--slate); }
+#pme-scout-root .dossier.status-abandonne { opacity: 0.55; }
+
+/* MODAL */
+#pme-scout-root .modal-overlay { position: fixed; inset: 0; background: rgba(27,35,48,0.55); z-index: 100; display:flex; align-items:center; justify-content:center; padding: 20px; }
+#pme-scout-root .modal-box { background: var(--paper-light); border-radius: 8px; max-width: 560px; width:100%; max-height: 86vh; overflow-y:auto; padding: 24px; box-shadow: 0 12px 40px rgba(0,0,0,0.35); }
+#pme-scout-root .modal-title { font-family:'Fraunces',serif; font-size: 19px; font-weight:600; margin-bottom: 6px; }
+#pme-scout-root .modal-sub { font-size: 12.5px; color: var(--slate); margin-bottom: 16px; line-height:1.5; }
+#pme-scout-root .modal-box label { display:block; font-size:12px; font-weight:600; margin: 12px 0 5px; }
+#pme-scout-root .modal-box input[type=text], #pme-scout-root .modal-box input[type=number], #pme-scout-root .modal-box input[type=url], #pme-scout-root .modal-box select, #pme-scout-root .modal-box textarea {
+  width:100%; border:1px solid var(--line-strong); border-radius:5px; padding:8px 10px; font-family:'Inter',sans-serif; font-size:13px; background:#fff;
+}
+#pme-scout-root .modal-box textarea { min-height: 64px; resize: vertical; }
+#pme-scout-root .modal-box textarea.readonly-copy { font-family:'IBM Plex Mono',monospace; font-size:11.5px; min-height:180px; background: var(--paper); color: var(--ink-soft); }
+#pme-scout-root .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+#pme-scout-root .radio-row { display:flex; flex-direction:column; gap:6px; margin-top: 8px; }
+#pme-scout-root .radio-row label { display:flex; align-items:center; gap:8px; font-weight: 400; font-size: 13px; margin:0; }
+#pme-scout-root .modal-close-x { position:absolute; top:14px; right:16px; background:none; border:none; font-size:20px; color:var(--slate); padding:2px 6px; }
+#pme-scout-root .modal-box.wide { max-width: 680px; }
+#pme-scout-root .form-divider { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--brass-dim); border-top:1px solid var(--line); margin-top:20px; padding-top:14px; }
+#pme-scout-root .form-divider:first-child { border-top:none; margin-top:0; padding-top:0; }
+#pme-scout-root .modal-box textarea.list-textarea { min-height:92px; font-size:12.5px; }
+#pme-scout-root .paste-box { border:1px dashed var(--brass); border-radius:6px; padding:12px; margin-top:16px; background: var(--amber-bg); }
+#pme-scout-root .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper-light); padding: 11px 20px; border-radius: 6px; font-size: 13px; z-index: 200; box-shadow: 0 6px 20px rgba(0,0,0,0.3); max-width: 90vw; }
+
+/* GRID for group form */
+#pme-scout-root .two-col { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { #pme-scout-root .two-col { grid-template-columns: 1fr; } }
+
+/* EMPTY STATE */
+#pme-scout-root .empty-state { text-align:center; padding: 50px 20px; color: var(--slate); }
+#pme-scout-root .empty-state .serif { font-size: 18px; color: var(--ink-soft); display:block; margin-bottom:6px; }
+
+/* DD VIEW */
+#pme-scout-root .dd-nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 20px; }
+#pme-scout-root .dd-nav button { font-family:'IBM Plex Mono',monospace; font-size:11.5px; }
+#pme-scout-root .dd-doc { background: var(--paper-light); border: 1px solid var(--line-strong); border-radius: 8px; padding: 28px 30px; }
+#pme-scout-root .dd-doc-header { border-bottom: 2px solid var(--ink); padding-bottom: 14px; margin-bottom: 18px; display:flex; justify-content:space-between; gap: 16px; flex-wrap:wrap; }
+#pme-scout-root .dd-doc-title { font-family:'Fraunces',serif; font-size: 23px; font-weight:700; }
+#pme-scout-root .dd-doc-ref { font-family:'IBM Plex Mono',monospace; font-size: 11px; color: var(--slate); margin-bottom: 4px; }
+#pme-scout-root .dd-verdict { font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; border:2px solid var(--forest); color:var(--forest); padding:8px 14px; border-radius:5px; text-align:center; white-space:nowrap; }
+#pme-scout-root .dd-section { margin-bottom: 24px; }
+#pme-scout-root .dd-section h3 { font-family:'Fraunces',serif; font-size:16px; font-weight:600; border-left: 4px solid var(--brass); padding-left:10px; margin-bottom:10px; }
+#pme-scout-root .dd-section h4 { font-size: 13px; font-weight:700; margin: 14px 0 8px; color: var(--ink-soft); }
+#pme-scout-root .dd-table { width:100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 12px; }
+#pme-scout-root .dd-table th, #pme-scout-root .dd-table td { border: 1px solid var(--line-strong); padding: 8px 10px; text-align: left; vertical-align: top; }
+#pme-scout-root .dd-table th { background: var(--paper-deep); font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px; }
+#pme-scout-root .dd-table td.num { font-family:'IBM Plex Mono',monospace; }
+#pme-scout-root .dd-list { margin: 0 0 10px; padding-left: 20px; font-size: 13px; line-height: 1.65; color: var(--ink-soft); }
+#pme-scout-root .dd-list li { margin-bottom: 4px; }
+#pme-scout-root .dd-para { font-size: 13px; line-height: 1.65; color: var(--ink-soft); margin-bottom: 10px; }
+
+#pme-scout-root .qa-box { background: var(--paper); border: 1px solid var(--line-strong); border-radius: 8px; padding: 18px; margin-top: 22px; }
+#pme-scout-root .qa-entry { background: var(--paper-light); border: 1px solid var(--line); border-radius: 6px; padding: 10px 13px; margin-bottom: 10px; }
+#pme-scout-root .qa-q { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+#pme-scout-root .qa-a { font-size: 12.5px; color: var(--ink-soft); border-top: 1px dashed var(--line-strong); margin-top: 6px; padding-top: 6px; }
+#pme-scout-root .qa-pending { font-size: 11.5px; color: var(--brass-dim); font-style: italic; }
+
+/* COMPARISON */
+#pme-scout-root .compare-table-wrap { overflow-x: auto; }
+#pme-scout-root table.compare-table { border-collapse: collapse; width: 100%; font-size: 12.5px; background: var(--paper-light); }
+#pme-scout-root table.compare-table th, #pme-scout-root table.compare-table td { border: 1px solid var(--line-strong); padding: 10px 12px; text-align: left; vertical-align: top; }
+#pme-scout-root table.compare-table th { background: var(--ink); color: var(--paper-light); font-family:'IBM Plex Mono',monospace; font-size: 11px; letter-spacing:0.4px; position: sticky; top:0; }
+#pme-scout-root table.compare-table td:first-child, table.compare-table th:first-child { background: var(--paper-deep); font-weight: 600; font-family:'IBM Plex Mono',monospace; font-size: 11px; text-transform:uppercase; color: var(--ink-soft); white-space:nowrap; }
+#pme-scout-root .select-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 18px; }
+#pme-scout-root .select-chip { border:1px solid var(--line-strong); background:var(--paper-light); border-radius:6px; padding:8px 12px; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:8px; }
+#pme-scout-root .select-chip.selected { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+#pme-scout-root .select-chip input { pointer-events:none; }
+
+#pme-scout-root .footer-note { text-align:center; font-size: 11px; color: var(--slate); margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); }
+#pme-scout-root .auth-screen { min-height: 60vh; display:flex; align-items:center; justify-content:center; padding: 20px; }
+#pme-scout-root .auth-box { background: var(--paper-light); border: 1px solid var(--line-strong); border-radius: 10px; padding: 32px 30px; max-width: 380px; width:100%; box-shadow: 0 8px 30px rgba(27,35,48,0.12); }
+#pme-scout-root .auth-box .tagline { margin-bottom: 22px; }
+#pme-scout-root .auth-box label { display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin: 12px 0 4px; }
+#pme-scout-root .auth-box input { width:100%; border:1px solid var(--line-strong); border-radius:5px; padding:9px 11px; font-family:'Inter',sans-serif; font-size:14px; }
+#pme-scout-root .auth-actions { display:flex; gap:10px; margin-top:20px; }
+#pme-scout-root .auth-actions button { flex:1; }
+#pme-scout-root .auth-error { background: var(--vermillion-bg); color: var(--vermillion); border-radius:5px; padding:8px 10px; font-size:12.5px; margin-bottom:6px; }
+#pme-scout-root .auth-status { font-size:12px; color:var(--slate); margin-top:12px; text-align:center; min-height:16px; }
+</style>
+</head>
+<body>
+
+<div id="pme-scout-root">
+  <div class="bg-texture"></div>
+  <div class="masthead">
+    <div class="masthead-inner">
+      <div>
+        <div class="wordmark">PME <span>Scout</span></div>
+        <div class="tagline">Dossiers de reprise</div>
+      </div>
+      <div class="masthead-meta" id="psr-header-meta"></div>
+    </div>
+  </div>
+  <div class="shell">
+    <div class="tabbar" id="psr-tabbar"></div>
+    <div id="psr-content"></div>
+  </div>
+  <div class="footer-note">Espace de travail personnel — les recherches, due diligence et réponses sont produites par Claude en conversation, puis déposées ici.</div>
+  <div id="psr-modal-root"></div>
+  <div id="psr-toast-root"></div>
+</div>
+
+<script>
+(function(){
+
+/* ============================= SUPABASE ============================= */
+/* Remplace ces deux constantes une fois le projet créé (URL + clé publique/anon —
+   cette clé est PRÉVUE pour être publique, la sécurité vient des policies RLS, pas d'un secret ici). */
+var SUPABASE_URL = "https://nvnxltmgxtxuzxywmfvo.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable_Ccv5lbfTGpnXw4PEkZx1Ng_BClQul65";
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var currentUser = null;
+
+/* ============================= DATA ============================= */
+
+var SEED_PROPOSALS = [
+  {
+    id: 'p1',
+    topPick: true,
+    name: "Fourniture d'équipements hydrauliques — maintenance aéronautique",
+    sector: "Industrie de niche — instrumentation aéronautique",
+    location: "Seine-et-Marne (77)",
+    source: "Fusacq",
+    ref: "V73696",
+    url: "https://www.fusacq.com/vente-entreprise-fourniture-dequipements-hydrauliques-et-services-destines-a-la-maintenance-aeronautique-seine-et-marne,73696_fr_",
+    lastChecked: "17/07/2026 — annonce active, mise à jour le 29/05/2026",
+    ca: "635 k€ (2025) · 660 k€ (2026 est.) · 690 k€ (2024)",
+    ebitda: "≈130–160 k€ estimés (20–24 % du CA)",
+    ebitdaIsEstimate: true,
+    resultat: "95 k€ (2026 est.) — a varié de 25 à 95 k€ sur 3 ans",
+    prix: "280 k€ hors trésorerie",
+    prixDetail: "+ ≈351 k€ de trésorerie nette au bilan — apport mini. indiqué : 150 k€. Modalité de rachat (fonds de commerce ou titres) à clarifier avec le cédant.",
+    multiple: "≈1,8–2,2x (estimé sur EBE estimé)",
+    salaireDirigeant: null,
+    pitch: "SAS de plus de 10 ans qui conçoit, fabrique et étalonne des équipements de mesure de pression pour l'aéronautique (manomètres, bancs de pression, instruments oxygène), avec un laboratoire d'étalonnage agréé et une activité de maintenance/réparation. Le dirigeant majoritaire (63 ans) part en retraite. L'annonce elle-même liste comme point faible une \"organisation commerciale embryonnaire\", une \"visibilité internet réduite\" et une forte dépendance au dirigeant — c'est la définition même d'une belle endormie : un savoir-faire réglementé et rare, jamais commercialement activé.",
+    criteria: [
+      {n:1, label:'Marché stable/croissant', status:'ok', note:"Maintenance aéronautique réglementée (étalonnage périodique obligatoire) sur parc aérien civil et militaire existant : demande structurellement récurrente, indépendante des cycles de livraison d'avions neufs."},
+      {n:2, label:'Revenus récurrents', status:'check', note:"Le laboratoire d'étalonnage et la maintenance/réparation sont contractuellement récurrents (obligation réglementaire de re-étalonnage) ; la part négoce d'équipements neufs l'est moins. Répartition exacte négoce / service à demander."},
+      {n:3, label:'EBITDA > 15 %', status:'check', note:"EBE non communiqué dans l'annonce. Résultat net très volatil (25 k€ à 95 k€ sur 3 ans) — nécessite de comprendre la cause avant de valider le seuil."},
+      {n:4, label:'Faible dépendance clients', status:'warn', note:"Clientèle = grandes compagnies aériennes et sociétés de maintenance aéronefs — univers B2B concentré sur un seul secteur. Aucune répartition nominative communiquée : à obtenir en priorité absolue."},
+      {n:5, label:'Avantage concurrentiel', status:'ok', note:"Laboratoire d'étalonnage agréé + savoir-faire réglementé = barrière à l'entrée réelle. Marché de niche \"servi par des PME\" selon l'annonce elle-même — peu de concurrence frontale."}
+    ],
+    vigilance: [
+      {label:'Risque humain / dépendance dirigeant', level:'eleve', note:"Signalé par l'annonce elle-même : \"dépend beaucoup du dirigeant\". Accompagnement post-cession et transfert de la relation client à sécuriser contractuellement."},
+      {label:'Volatilité du résultat net', level:'modere', note:"RN 2024→2026 : 70k → 25k → 95k. Demander l'origine de la baisse 2025 (charge exceptionnelle ? investissement ? perte de client ?) avant de fiabiliser l'EBE."}
+    ]
+  },
+  {
+    id: 'p2',
+    topPick: false,
+    name: "Belle entreprise d'électricité BtoB — Paris 19e",
+    sector: "Électricité générale — dépannage & installation BtoB",
+    location: "Paris 19e + petite couronne",
+    source: "Transentreprise (CCI Paris IDF)",
+    ref: "IDF262919A",
+    url: "https://www.transentreprise.com/offres/fiche/IDF262919A/belle-entreprise-delectricite-btb-paris-19/ile-de-france/paris/paris",
+    lastChecked: "17/07/2026 — annonce active (vérifiée à l'instant sur la liste Transentreprise Paris)",
+    ca: "776 k€ (2025)",
+    ebitda: "153 k€ — 19,7 % du CA",
+    ebitdaIsEstimate: false,
+    resultat: "≈110–120 k€ estimés après IS",
+    prix: "445 000 €",
+    prixDetail: "Fonds de commerce. Diagnostic Transmission + Évaluation réalisés par la CCI.",
+    multiple: "2,91x l'EBE — sous la cible de 3x",
+    salaireDirigeant: "54 k€ brut (2025) — mentionné dans la note de retraitement CCI, à normaliser dans le calcul de l'EBE",
+    pitch: "28 ans d'ancienneté, certification Qualifelec E1 SEH (reconnue par l'État), clientèle de gestionnaires de patrimoine fidèles depuis des années sans aucun contrat formalisé ni prospection structurée. C'est le dossier que tu as déjà entièrement instruit toi-même le 25 juin — je le reprends ici tel quel pour qu'il vive dans le même espace que le reste du pipeline.",
+    criteria: [
+      {n:1, label:'Marché stable/croissant', status:'ok', note:"RE2020, mise aux normes NF C 15-100, essor de l'IRVE (bornes de recharge) : demande structurelle en électricité BtoB à Paris."},
+      {n:2, label:'Revenus récurrents', status:'ok', note:"Clientèle de gestionnaires de patrimoine fidèles sur la durée ; récurrence de fait bien que non contractualisée."},
+      {n:3, label:'EBITDA > 15 %', status:'ok', note:"19,7 % — confirmé par l'audit CCI (Diagnostic Transmission réalisé)."},
+      {n:4, label:'Faible dépendance clients', status:'check', note:"Non confirmé dans l'annonce. Demander le TOP 10 clients et leur poids dans le CA — seuil d'alerte : un client > 30 %."},
+      {n:5, label:'Avantage concurrentiel', status:'ok', note:"28 ans d'ancienneté + certification Qualifelec E1 SEH = barrière à l'entrée officielle exigée par les gestionnaires de patrimoine sérieux."}
+    ],
+    vigilance: [
+      {label:'Relation commerciale non contractualisée', level:'modere', note:"Risque de fuite client au changement de dirigeant. Plan d'action : contractualiser les 10 premiers clients dans les 6 premiers mois."},
+      {label:'Concentration clients potentielle', level:'eleve', note:"À lever impérativement avant signature — voir due diligence complète."}
+    ],
+    hasFullDD: true
+  },
+  {
+    id: 'p3',
+    topPick: false,
+    name: "Distribution de logiciels — infrastructure IT & cybersécurité BtoB",
+    sector: "Logiciels & services IT — sécurité informatique",
+    location: "Île-de-France",
+    source: "C.R.A (Cédants et Repreneurs d'Affaires)",
+    ref: "N°18695",
+    url: "https://www.cra.asso.fr/opportunite-reprise.aspx?num=18695",
+    lastChecked: "17/07/2026 — annonce active (page consultée directement)",
+    ca: "699 443 €",
+    ebitda: "≈105–155 k€ estimés (15–22 % du CA)",
+    ebitdaIsEstimate: true,
+    resultat: "Non communiqué — à demander au dossier détaillé",
+    prix: "500 000 €",
+    prixDetail: "Motif de cession : retraite. Peu de détail public au-delà de l'activité et des chiffres globaux.",
+    multiple: "≈3,2x–4,8x (estimé) — probablement au-dessus de la cible 3x, à négocier",
+    salaireDirigeant: null,
+    pitch: "Distribution de logiciels spécialisés de gestion et de renforcement de la sécurité de l'infrastructure IT, des données et des réseaux, avec services de maintenance/support associés. Secteur porteur (cybersécurité), mais l'annonce publique est nettement moins détaillée que les autres dossiers du pipeline : c'est un profil à qualifier par un premier contact plutôt qu'à trancher sur pièces.",
+    criteria: [
+      {n:1, label:'Marché stable/croissant', status:'ok', note:"Cybersécurité / infrastructure IT : marché en croissance structurelle forte en France."},
+      {n:2, label:'Revenus récurrents', status:'check', note:"\"Maintenance/support\" suggère de la récurrence, mais \"distribution de logiciels\" peut inclure une part de vente de licences one-shot. Répartition à demander."},
+      {n:3, label:'EBITDA > 15 %', status:'check', note:"Aucun EBE communiqué publiquement — estimation à confirmer via le dossier détaillé du CRA."},
+      {n:4, label:'Faible dépendance clients', status:'warn', note:"Aucune information sur la concentration client dans l'annonce publique — point aveugle à traiter en priorité avant tout engagement de temps."},
+      {n:5, label:'Avantage concurrentiel', status:'check', note:"Pas de détail sur des partenariats éditeurs exclusifs ou certifications dans le teaser public."}
+    ],
+    vigilance: [
+      {label:'Dossier peu documenté publiquement', level:'modere', note:"3 des 5 critères ne peuvent pas être évalués sans le dossier détaillé du CRA (adhésion repreneur ~320 €/an). C'est un coût à engager consciemment avant d'aller plus loin."}
+    ]
+  },
+  {
+    id: 'p4',
+    topPick: false,
+    name: "Maintenance & installation génie climatique — Val d'Europe",
+    sector: "Génie climatique — climatisation, ventilation, chauffage",
+    location: "Arrond. de Torcy, Seine-et-Marne (77)",
+    source: "Transentreprise (CCI/CMA IDF)",
+    ref: "IDF259294A",
+    url: "https://www.transentreprise.com/offres/fiche/IDF259294A/maintenance-et-installation-genie-climatique/ile-de-france/seine-et-marne/arrond-de-torcy",
+    lastChecked: "17/07/2026 — annonce active (vérifiée à l'instant)",
+    ca: "949 978 € (2024)",
+    ebitda: "≈140–170 k€ estimés (15–18 % du CA)",
+    ebitdaIsEstimate: true,
+    resultat: "Non communiqué — à demander",
+    prix: "325 000 €",
+    prixDetail: "Fonds de commerce hors stock. Pas de local à reprendre. 4 véhicules inclus. Diagnostic Transmission + Évaluation réalisés.",
+    multiple: "≈1,9–2,3x (estimé) — bien sous la cible 3x",
+    salaireDirigeant: null,
+    pitch: "Installation et maintenance en climatisation, ventilation et chauffage sur le secteur de Val d'Europe, avec des contrats de maintenance à céder — le signal de récurrence le plus concret du dossier. Clientèle à 70 % professionnels du tertiaire, 5 % particuliers, 25 % collectivités. Profil repreneur recherché : gestionnaire avec compétences génie climatique, management et commerciale — ou croissance externe pour un acteur similaire, ce qui correspond bien à ta logique de build-up.",
+    criteria: [
+      {n:1, label:'Marché stable/croissant', status:'ok', note:"Climatisation/chauffage/pompes à chaleur : porté par la rénovation énergétique et la RE2020, comme pour l'électricité BtoB."},
+      {n:2, label:'Revenus récurrents', status:'ok', note:"\"Contrats de maintenance à céder\" explicitement mentionné — le meilleur signal contractuel du lot après le portefeuille d'assurances."},
+      {n:3, label:'EBITDA > 15 %', status:'check', note:"EBE non communiqué ; estimation raisonnable au vu du prix demandé et du profil (multiple implicite très bas si l'estimation est correcte)."},
+      {n:4, label:'Faible dépendance clients', status:'check', note:"Répartition par typologie connue (70/5/25 %) mais aucune répartition nominative des plus gros clients — à demander."},
+      {n:5, label:'Avantage concurrentiel', status:'check', note:"Ancienneté et diagnostic CCI réalisé sont de bons signaux, mais pas de certification officielle mentionnée (contrairement à Qualifelec pour l'électricité) — l'avantage concurrentiel est moins \"dur\" à démontrer sur pièces."}
+    ],
+    vigilance: []
+  },
+  {
+    id: 'p5',
+    topPick: false,
+    name: "Portefeuille d'assurances — particuliers, syndics, professionnels",
+    sector: "Courtage d'assurance",
+    location: "Île-de-France",
+    source: "C.R.A (Cédants et Repreneurs d'Affaires)",
+    ref: "N°18747",
+    url: "https://www.cra.asso.fr/opportunite-reprise.aspx?num=18747",
+    lastChecked: "17/07/2026 — annonce active (page consultée directement)",
+    ca: "503 569 €",
+    ebitda: "≈140–160 k€ estimés (28–32 % du CA)",
+    ebitdaIsEstimate: true,
+    resultat: "Non communiqué — à demander",
+    prix: "700 000 €",
+    prixDetail: "Motif de cession : changement de vie (pas un départ retraite). Charges décrites comme \"maîtrisées\", équipe stable.",
+    multiple: "≈4,3x–5x (estimé) — AU-DESSUS de ta cible < 3x",
+    salaireDirigeant: null,
+    pitch: "Portefeuille réparti équitablement entre particuliers, syndics de copropriété et professionnels, avec un taux de renouvellement annuel des contrats de 89 % et une croissance organique de 5 à 7 % par an. Sur les 5 critères qualitatifs, c'est objectivement le dossier le plus solide du lot — mais le prix demandé ne rentre probablement pas dans ton objectif de rachat à moins de 3x le résultat. Je te le présente quand même : c'est un dossier à négocier ou à structurer autrement (earn-out, paiement différé), pas un dossier à écarter d'office.",
+    criteria: [
+      {n:1, label:'Marché stable/croissant', status:'ok', note:"Marché de l'assurance stable structurellement, et ce portefeuille croît de 5-7 %/an — au-dessus de la moyenne du secteur."},
+      {n:2, label:'Revenus récurrents', status:'ok', note:"Taux de renouvellement annuel de 89 % — c'est le meilleur indicateur chiffré de récurrence de tout le pipeline actuel."},
+      {n:3, label:'EBITDA > 15 %', status:'ok', note:"Non communiqué mais très probable au vu du modèle (commissions récurrentes, charges maîtrisées, équipe stable) — à confirmer."},
+      {n:4, label:'Faible dépendance clients', status:'ok', note:"Portefeuille structurellement diversifié sur 3 segments (particuliers / syndics / professionnels)."},
+      {n:5, label:'Avantage concurrentiel', status:'ok', note:"89 % de renouvellement = preuve tangible de fidélisation et de coût de changement pour le client — un vrai actif, pas une promesse."}
+    ],
+    vigilance: [
+      {label:'Prix probablement incompatible avec l\'objectif < 3x', level:'eleve', note:"700 k€ pour un EBE estimé de 140-160 k€ donne un multiple de 4,3x à 5x. Soit le prix se négocie fortement à la baisse, soit le deal doit être structuré avec crédit vendeur/earn-out important pour rester finançable sans apport personnel."}
+    ]
+  }
+];
+
+/* Full illustrative Due Diligence content — screening level, built from the public teaser + sector reasoning.
+   Structured to mirror the model Théophile already uses. */
+var DUE_DILIGENCE = {
+  p1: {
+    verdict: "DOSSIER PRIORITAIRE — À CONTACTER",
+    verdictTone: "ok",
+    dateAnalyse: "17 juillet 2026",
+    sections: [
+      {
+        h: "1. Fiche d'identité de l'entreprise",
+        table: [
+          ["Référence", "V73696 — Fusacq"],
+          ["Titre", "Fourniture d'équipements hydrauliques et services destinés à la maintenance aéronautique"],
+          ["Activité", "Étude, fabrication, négoce d'équipements de mesure de pression + laboratoire d'étalonnage agréé + maintenance/réparation d'instruments oxygène"],
+          ["Forme juridique", "SAS — cession de parts ou de fonds de commerce (à clarifier)"],
+          ["Ancienneté", "Plus de 10 ans"],
+          ["Localisation", "Seine-et-Marne, Île-de-France"],
+          ["Raison de cession", "Départ à la retraite du dirigeant majoritaire (63 ans) et de son associé (personne morale minoritaire)"],
+          ["Effectif", "7 personnes (2024) → 8 personnes (2025-2026), dirigeant inclus"],
+          ["CA", "690 k€ (2024) · 635 k€ (2025) · 660 k€ (2026 est.)"],
+          ["Résultat net", "70 k€ (2024) · 25 k€ (2025) · 95 k€ (2026 est.)"],
+          ["Fonds propres", "636 k€"],
+          ["Trésorerie nette", "351 k€ (au 31/12/2025)"],
+          ["Prix demandé", "280 k€ hors trésorerie (fonds de commerce, incluant 80 k€ de stock)"],
+          ["Apport mini. indiqué", "150 k€"],
+          ["Export", "Oui — la société travaille à l'export"]
+        ]
+      },
+      {
+        h: "2. Analyse des 5 critères d'acquisition",
+        criteriaTable: SEED_PROPOSALS[0].criteria,
+        verdictLine: "Verdict sur les 5 critères : 2 valides (marché, avantage concurrentiel), 2 à confirmer (récurrence exacte, EBITDA réel), 1 en attention (concentration clients). Aucun critère strictement éliminatoire déclenché, mais la dépendance clients doit être levée avant tout engagement de temps."
+      },
+      {
+        h: "3. Analyse sectorielle et avantages concurrentiels",
+        sub: [
+          {
+            h4: "3.1 Dynamique du marché de la maintenance aéronautique",
+            paras: [
+              "Le marché est porté par des drivers structurels peu sensibles aux cycles économiques courts : le parc aérien civil et militaire existant nécessite un ré-étalonnage périodique obligatoire des instruments de mesure et de sécurité, indépendamment des livraisons d'avions neufs.",
+              "La société est positionnée sur un marché de niche décrit dans l'annonce elle-même comme \"servi par des PME\" — peu de grands groupes y sont présents, ce qui limite la pression concurrentielle directe sur les prix."
+            ]
+          },
+          {
+            h4: "3.2 Valeur du laboratoire d'étalonnage agréé",
+            paras: [
+              "L'étalonnage de transducteurs et manomètres de pression (-1 à 4000 bar), d'instruments de force et de dimension constitue une compétence réglementée : elle nécessite une accréditation et un savoir-faire technique qui ne se recréent pas du jour au lendemain.",
+              "C'est l'équivalent, pour ce dossier, de la certification Qualifelec sur le dossier électricité : une barrière à l'entrée officielle plutôt qu'une simple réputation commerciale."
+            ]
+          },
+          {
+            h4: "3.3 Profil \"belle endormie\" confirmé",
+            paras: [
+              "L'annonce liste elle-même comme points faibles : \"organisation commerciale embryonnaire, peu de visite clientèle\", \"dépend beaucoup du dirigeant\", \"visibilité internet réduite\". C'est une confirmation directe du profil recherché, écrite par le vendeur lui-même — un signal rare et fiable.",
+              "Potentiel de création de valeur immédiat : structuration commerciale (aujourd'hui quasi inexistante), présence digitale, développement de l'activité annexe mentionnée (\"élevage/chasse\") à investir ou céder, et diversification client au-delà de l'aéronautique pur."
+            ]
+          }
+        ]
+      },
+      {
+        h: "4. Analyse financière",
+        table: [
+          ["Chiffre d'affaires 2026 (est.)", "660 k€"],
+          ["Résultat net 2026 (est.)", "95 k€"],
+          ["EBE — estimation", "≈130-160 k€ (20-24 % du CA) — non communiqué dans l'annonce, à confirmer"],
+          ["Prix demandé", "280 k€ hors trésorerie"],
+          ["Multiple prix / EBE (estimé)", "≈1,8x à 2,2x — largement sous la cible de 3x"],
+          ["Trésorerie nette au bilan", "351 k€ — supérieure au prix demandé du fonds de commerce"]
+        ],
+        sub: [
+          {
+            h4: "4.1 Points de vérification comptable",
+            list: [
+              "RN 2024→2025→2026 : 70k → 25k → 95k. Comprendre impérativement la cause de la baisse 2025 avant de valider un EBE de référence (charge exceptionnelle, investissement, perte ponctuelle de client, retard de facturation ?).",
+              "EBE non communiqué dans l'annonce publique : demander le détail (EBE, REX) sur les 3 derniers exercices dès le premier contact.",
+              "Vérifier le contenu des retraitements courants : rémunération du dirigeant (54 k€ brut en 2025, à normaliser), charges non récurrentes.",
+              "Clarifier si le prix de 280 k€ correspond à un rachat de fonds de commerce (la trésorerie de 351 k€ reste alors au cédant) ou à un rachat de titres de la SAS (la trésorerie ferait alors partie intégrante de la valeur transférée) — l'annonce mentionne les deux logiques sans trancher clairement."
+            ]
+          },
+          {
+            h4: "4.2 Simulation de montage financier (sans trésorerie personnelle)",
+            table2: {
+              headers: ["Scénario", "Prix total", "Trésorerie cible mobilisable", "Crédit vendeur", "Dette bancaire", "Apport"],
+              rows: [
+                ["A — Fonds de commerce (trésorerie non transférée)", "280 k€", "0 € (reste au cédant)", "≈80 k€ (25-30 %)", "≈150 k€ (55 %)", "≈50 k€ (18 %)"],
+                ["B — Rachat de titres (trésorerie incluse)", "≈630 k€ (280k + 351k)", "≈300 k€ (remontée via holding post-closing)", "≈150 k€", "≈150 k€", "≈30 k€"]
+              ]
+            },
+            paras: [
+              "Le scénario B est structurellement le plus intéressant au regard de ta logique d'acquisition : la trésorerie excédentaire de la cible (351 k€) peut financer près de la moitié du prix total via une remontée post-closing, ce qui réduit fortement le besoin de dette bancaire et d'apport personnel. À vérifier avec un expert-comptable : faisabilité légale et fiscale de la remontée de trésorerie (distribution de dividende exceptionnel avant ou après cession, ou mécanisme de holding avec intégration fiscale)."
+            ]
+          }
+        ]
+      },
+      {
+        h: "5. Points de vigilance",
+        vigilanceTable: [
+          {label:'Dépendance au dirigeant', level:'ELEVE', note:"Confirmé par l'annonce elle-même. Exiger un accompagnement de 6 mois minimum et cartographier qui, du dirigeant ou des techniciens, porte réellement la relation client."},
+          {label:'Concentration clients', level:'ELEVE', note:"Clientèle B2B concentrée sur l'aéronautique (grandes compagnies aériennes + sociétés de maintenance). Demander la liste des 10 premiers clients et leur poids dans le CA dès le premier échange."},
+          {label:'Volatilité du résultat net', level:'MODERE', note:"Écart 25k-95k sur 3 ans à expliquer avant de fiabiliser une marge d'EBE de référence."},
+          {label:'Modalité de cession ambiguë', level:'MODERE', note:"Fonds de commerce ou titres ? Ceci change complètement le montage financier et le traitement de la trésorerie de 351 k€."},
+          {label:'Litiges prud\'homaux / dettes fiscales cachées', level:'FAIBLE', note:"Aucune mention dans l'annonce — à vérifier via Infogreffe et attestation URSSAF, comme pour tout dossier avant signature."}
+        ]
+      },
+      {
+        h: "6. Atouts confirmés et potentiel de création de valeur",
+        sub: [
+          {
+            h4: "6.1 Atouts confirmés",
+            list: [
+              "Multiple estimé 1,8x-2,2x l'EBE : très en dessous de la cible de 3x, même en tenant compte de l'incertitude sur l'EBE réel.",
+              "Trésorerie nette (351 k€) supérieure au prix demandé du fonds de commerce (280 k€) : marge de sécurité rare sur ce type de dossier.",
+              "Laboratoire d'étalonnage agréé : barrière réglementaire difficile à répliquer rapidement.",
+              "Aucune dette bancaire (PGE ou LT) signalée dans l'annonce.",
+              "Marché de niche peu concurrencé, positionné sur un secteur (aéronautique) en croissance structurelle."
+            ]
+          },
+          {
+            h4: "6.2 Leviers de création de valeur post-acquisition",
+            list: [
+              "Structuration commerciale : la fonction quasi inexistante aujourd'hui (\"organisation commerciale embryonnaire\") est le principal gisement de valeur — prospection ciblée auprès d'autres opérateurs de maintenance aéronautique civile/militaire.",
+              "Présence digitale minimale à construire : site professionnel, référencement sectoriel spécialisé (peu de concurrents le font sur ce type de niche).",
+              "Diversification sectorielle : les \"quelques autres secteurs à développer\" mentionnés dans l'annonce (au-delà de l'aéronautique) pour réduire la concentration client.",
+              "Décision à prendre sur l'activité annexe mentionnée (élevage/chasse) évoquée comme \"à développer / investir\" par l'annonce : recentrer ou céder selon la logique du deal."
+            ]
+          }
+        ]
+      },
+      {
+        h: "7. Verdict et plan d'action",
+        verdictText: "DOSSIER PRIORITAIRE — À CONTACTER EN PREMIER. Multiple très favorable (même en scénario prudent), trésorerie couvrant quasiment le prix demandé, avantage concurrentiel réglementaire réel. Les deux inconnues bloquantes — concentration client et EBE réel — sont exactement le type d'information qu'un premier contact avec le cédant permet de lever rapidement, sans engager de frais.",
+        sub: [
+          {
+            h4: "7.1 Checklist avant premier contact",
+            list: [
+              "Vérifier que l'annonce est toujours active sur Fusacq (dernière vérification : 17/07/2026, mise à jour cédant du 29/05/2026).",
+              "Préparer une lettre de présentation repreneur (profil, motivation, capacité de financement, logique de build-up).",
+              "Vérifier sur Infogreffe l'absence de procédure collective sur la société.",
+              "Préparer une NDA de confidentialité avant accès aux données financières détaillées."
+            ]
+          },
+          {
+            h4: "7.2 Questions prioritaires au cédant",
+            list: [
+              "Quelle est la répartition du CA entre négoce d'équipements neufs et activité de service (étalonnage, maintenance, réparation) ?",
+              "Quels sont vos 5 à 10 premiers clients et leur poids respectif dans le CA ?",
+              "Quel est l'EBE réel des 3 derniers exercices, et quels retraitements s'appliquent (rémunération dirigeant, charges exceptionnelles) ?",
+              "Que s'est-il passé en 2025 pour expliquer la baisse du résultat net à 25 k€ ?",
+              "Le prix de 280 k€ correspond-il à un rachat de fonds de commerce ou de titres de la SAS ? La trésorerie de 351 k€ est-elle incluse ou distribuée avant cession ?",
+              "Quel est le devenir souhaité de l'activité annexe (élevage/chasse) ?",
+              "Quelle est votre appétence pour un crédit vendeur, et à quelles conditions (durée, taux, garanties) ?"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+};
+// Reuse Théophile's own due diligence (25 juin 2026) for p2, restructured to the same viewer format.
+DUE_DILIGENCE.p2 = {
+  verdict: "DOSSIER ÉLIGIBLE ET ATTRACTIF — DD APPROFONDIE",
+  verdictTone: "ok",
+  dateAnalyse: "25 juin 2026 (analyse déjà réalisée)",
+  sections: [
+    { h:"1. Fiche d'identité de l'entreprise", table: [
+      ["Référence","IDF262919A — Transentreprise"],
+      ["Activité","Électricité, dépannages et installations (clientèle BtoB — gestionnaires de patrimoine)"],
+      ["Code NAF","4321A — Travaux d'installation électrique"],
+      ["Localisation","Paris 19e + petite couronne"],
+      ["Ancienneté","28 ans (fondée ~1997)"],
+      ["Certification","Qualifelec niveau E1 SEH"],
+      ["Raison de cession","Départ à la retraite du dirigeant"],
+      ["Effectif","4 personnes : 1 gérant + 1 assistante + 2 CDI qualifiés"],
+      ["CA 2025","776 000 €"],
+      ["EBE retraité 2024","153 000 € (~19,7 %)"],
+      ["Prix demandé","445 000 € (fonds de commerce)"],
+      ["Multiple EBE","2,91x — dans la cible < 3x"],
+      ["Diagnostic CCI","Diagnostic Transmission et Évaluation réalisés"]
+    ]},
+    { h:"2. Analyse des 5 critères d'acquisition", criteriaTable: SEED_PROPOSALS[1].criteria,
+      verdictLine:"Verdict sur les 5 critères : 4 valides, 1 à confirmer (concentration clients). Aucun critère éliminatoire déclenché." },
+    { h:"3. Analyse sectorielle et avantages concurrentiels", sub:[
+      {h4:"3.1 Dynamique du marché de l'électricité BtoB en IDF", paras:[
+        "RE2020 et obligations de DPE imposent des travaux électriques aux gestionnaires de patrimoine. Parc parisien 1950-1980 nécessitant des mises aux normes NF C 15-100. Essor de l'IRVE (bornes de recharge), compatible avec la certification Qualifelec détenue."
+      ]},
+      {h4:"3.2 Valeur stratégique de la certification Qualifelec E1 SEH", paras:[
+        "Qualification officielle reconnue par l'État, barrière à l'entrée significative (audit de compétences, références vérifiées, renouvellement périodique). Atout commercial majeur auprès des syndics et gestionnaires de patrimoine."
+      ]},
+      {h4:"3.3 Profil \"belle endormie\" confirmé", paras:[
+        "Aucune prospection commerciale structurée, absence de CRM, pas de développement récent, absence de présence digitale mentionnée. Potentiel immédiat : contractualisation clients, prospection BtoB, extension IRVE, recrutement."
+      ]}
+    ]},
+    { h:"4. Analyse financière", table:[
+      ["CA 2025","776 000 €"],["EBE retraité 2024","153 000 €"],["Marge EBE","~19,7 %"],
+      ["Résultat net estimé","~110-120 000 € après IS"],["Prix demandé","445 000 €"],
+      ["Multiple EBE","2,91x"],["Multiple CA","0,57x"],["CA / technicien","~388 000 €"]
+    ], sub:[
+      {h4:"4.1 Points de vérification comptable", list:[
+        "EBE 2024 / CA 2025 sur deux années différentes : demander le CA 2024 pour comparer sur la même période.",
+        "Contenu des retraitements EBE (rémunération dirigeant, loyer de marché, charges non récurrentes) : demander la note CCI.",
+        "Évolution du CA sur 3 ans (2022-2024) pour confirmer la stabilité.",
+        "Vérifier l'absence de dettes fiscales/sociales via Kbis, liasses fiscales et attestation URSSAF."
+      ]},
+      {h4:"4.2 Simulation de montage financier (sans trésorerie personnelle)", table2:{
+        headers:["Source de financement","Montant","% prix"],
+        rows:[
+          ["Trésorerie de la cible (remontée via holding)","~150 000 €","~34 %"],
+          ["Dette bancaire (LBO/OBO)","~150 000 €","~34 %"],
+          ["Crédit vendeur (3-5 ans)","~100 000 €","~22 %"],
+          ["Apport holding/investisseur","~45 000 €","~10 %"],
+          ["TOTAL","445 000 €","100 %"]
+        ]
+      }, paras:["Capacité de remboursement : EBE 153k€ → capacité service dette ~110k€/an après IS. Remboursement de la dette bancaire (150k) en ~18 mois. Montage très confortable."]}
+    ]},
+    { h:"5. Points de vigilance", vigilanceTable:[
+      {label:"Risque humain : clients liés au dirigeant", level:"ELEVE", note:"Vérifier si la relation est portée par le gérant ou par les techniciens. Exiger 6 mois d'accompagnement minimum."},
+      {label:"Concentration clients potentielle", level:"ELEVE", note:"Gestionnaires de patrimoine pouvant représenter de gros volumes. Seuil d'alerte : 1 client > 30 % du CA."},
+      {label:"Relation commerciale non contractualisée", level:"MODERE", note:"Risque de fuite au changement de direction. Contractualiser les 10 premiers clients dans les 6 premiers mois."},
+      {label:"EBE retraité : contenu des retraitements", level:"MODERE", note:"Demander la note de retraitement CCI (rémunération dirigeant, loyer de marché, charges exceptionnelles)."},
+      {label:"Données financières sur 2 années différentes", level:"MODERE", note:"EBE 2024 vs CA 2025 : demander les bilans 2022-2024 pour analyser la tendance."},
+      {label:"Statut de l'assistante post-cession", level:"MODERE", note:"Clarifier si elle reste, son rôle et ses conditions."},
+      {label:"Dettes fiscales ou sociales cachées", level:"FAIBLE", note:"Diagnostic CCI atténue le risque ; demander quand même URSSAF, liasses fiscales 3 ans, Kbis récent."},
+      {label:"Litiges prud'homaux non déclarés", level:"FAIBLE", note:"À vérifier via Infogreffe et entretiens avec les employés."}
+    ]},
+    { h:"6. Atouts confirmés et potentiel de création de valeur", sub:[
+      {h4:"6.1 Atouts confirmés", list:[
+        "Multiple 2,91x EBE : dans la cible < 3x, prix très attractif pour une entreprise certifiée de 28 ans.",
+        "Marge EBE ~19,7 % : bien au-dessus de la moyenne secteur BTP (~8-12 %).",
+        "Certification Qualifelec E1 SEH : avantage concurrentiel rare.",
+        "2 CDI qualifiés et autonomes inclus : continuité opérationnelle garantie.",
+        "Accompagnement cédant 6 mois : sécurise la transition.",
+        "Diagnostic et Évaluation CCI réalisés : fiabilité accrue des données."
+      ]},
+      {h4:"6.2 Leviers de création de valeur post-acquisition", list:[
+        "Contractualisation de la clientèle : objectif 60-70 % du CA sous contrat à 12 mois.",
+        "Prospection structurée BtoB auprès de syndics et gestionnaires de patrimoine en IDF.",
+        "Extension IRVE, compatible avec la certification Qualifelec.",
+        "Digitalisation : site web, SEO local, Google My Business, logiciel de gestion d'interventions.",
+        "Recrutement d'un 3e technicien (CA/technicien ~388k€ → 200-300k€ de CA additionnel possible).",
+        "Remontée de prix de 10-15 % probablement possible sans risque majeur."
+      ]}
+    ]},
+    { h:"7. Verdict et plan d'action", verdictText:"DOSSIER ÉLIGIBLE ET ATTRACTIF — POURSUIVRE EN DUE DILIGENCE APPROFONDIE. Répond à 4 des 5 critères, aucun point de vigilance éliminatoire déclenché, multiple 2,91x très en dessous du marché (5-7x pour un acquéreur industriel). Le seul point bloquant potentiel — la concentration clients — est à lever avant signature.", sub:[
+      {h4:"7.1 Checklist avant premier contact", list:[
+        "Vérifier que l'annonce est toujours active sur Transentreprise.com.",
+        "Préparer une lettre de présentation repreneur.",
+        "Vérifier sur Infogreffe l'absence de procédure collective.",
+        "Préparer une NDA avant accès aux données financières."
+      ]},
+      {h4:"7.2 Questions prioritaires au cédant", list:[
+        "Quel est le CA 2022, 2023 et 2024 ?",
+        "Quels sont vos 10 premiers clients et leur poids dans le CA ?",
+        "Les clients sont-ils attachés à vous ou aux techniciens ?",
+        "Quels sont les retraitements de l'EBE ?",
+        "L'assistante reste-t-elle ? À quelles conditions ?",
+        "Y a-t-il des litiges en cours ?",
+        "Quel est le prix si vous cédez aussi les murs ?",
+        "Avez-vous une préférence pour le crédit vendeur ?"
+      ]}
+    ]}
+  ]
+};
+
+var SECTOR_ICONS = {};
+
+/* ============================= CRITÈRES DE RECHERCHE PAR DÉFAUT ============================= */
+/* Reprend intégralement les instructions d'origine, réorganisées proprement. Modifiable via
+   "Modifier les caractéristiques de recherche" dans l'onglet Recherche. */
+
+var DEFAULT_CRITERIA = {
+  zone: "Île-de-France (intérêt secondaire pour le Nord-Pas-de-Calais)",
+  caMin: "500 000 €",
+  caMax: "1 500 000 €",
+  profil: "Une \"belle endormie\" : entreprise rentable, stable, sans développement récent. Absence de digital, de prospection structurée, de CRM. Dépendance à un portefeuille clients historique.",
+  criteria5: [
+    "Marché en croissance ou stable.",
+    "Revenus récurrents.",
+    "EBITDA supérieur à 15 %.",
+    "Faible dépendance à quelques clients.",
+    "Avantage concurrentiel difficile à copier, ou très grosse demande client dans la zone de chalandise."
+  ],
+  criteria6: "Idéalement (si l'information est trouvable) : le cédant a une appétence pour le risque.",
+  vigilance: [
+    "Litiges prud'homaux non déclarés",
+    "Dépendance à un client majeur",
+    "Dettes fiscales ou sociales cachées",
+    "Risque de cessation de paiement",
+    "EBE mal retraité",
+    "Hypothèses de croissance irréalistes",
+    "Risque humain sous-estimé"
+  ],
+  objectif: "Racheter une entreprise à un multiple inférieur à 3 fois son résultat annuel, sans mobiliser la trésorerie personnelle.",
+  financement: "Trésorerie excédentaire de l'entreprise + crédit vendeur + dette bancaire + dette investisseur, structurés via une holding d'acquisition. Le montage s'adapte au profil du dirigeant cédant (ex. combinaison crédit vendeur + trésorerie existante).",
+  pilotage: "Mise en place d'un gérant : expérience de gestion requise, rémunération indexée sur la performance. Rythme de suivi : réunions quotidiennes (1h) de 0 à 3 mois, hebdomadaires de 3 à 6 mois, puis trimestrielles.",
+  developpement: "Acquisition d'une première entreprise → stabilisation → extraction de cash → réinvestissement. Objectif final : construire un portefeuille d'entreprises (logique de build-up)."
+};
+
+function cloneDefaultCriteria() { return JSON.parse(JSON.stringify(DEFAULT_CRITERIA)); }
+
+/* ============================= STORAGE ============================= */
+
+function freshDefaultState() {
+  return {
+    savedListings: [],
+    groups: [],
+    excludedListings: [],
+    comparisonSelection: [],
+    questionsLog: {},
+    searchRequests: [],
+    currentProposals: JSON.parse(JSON.stringify(SEED_PROPOSALS)),
+    currentProposalsUpdatedAt: "2026-07-17T00:00:00.000Z",
+    searchCriteria: cloneDefaultCriteria(),
+    financingSelection: [],
+    financingData: {},
+    customDD: {}
+  };
+}
+var state = freshDefaultState();
+var ui = { tab: 'recherche', modal: null, modalCtx: null, groupFilter: null, statusFilter: null, ddSelected: null, toast: null };
+
+var STATUS_OPTIONS = [
+  { id: 'a_qualifier', label: 'À qualifier' },
+  { id: 'a_contacter', label: 'À contacter' },
+  { id: 'contact_pris', label: 'Contact pris' },
+  { id: 'negociation', label: 'En négociation' },
+  { id: 'acquis', label: 'Acquis' },
+  { id: 'abandonne', label: 'Abandonné' }
+];
+function statusLabel(id) { var s = STATUS_OPTIONS.find(function(o){return o.id===id;}); return s ? s.label : 'À qualifier'; }
+
+function safeParse(str, fallback) {
+  try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
+async function loadUserData() {
+  try {
+    var res = await sb.from('app_state').select('data').eq('user_id', currentUser.id).maybeSingle();
+    if (res.data && res.data.data && Object.keys(res.data.data).length) {
+      state = Object.assign({}, freshDefaultState(), res.data.data);
+    } else {
+      state = freshDefaultState();
+    }
+  } catch(e) { state = freshDefaultState(); }
+  render();
+}
+
+async function loadState() {
+  try {
+    var sessionRes = await sb.auth.getSession();
+    if (sessionRes && sessionRes.data && sessionRes.data.session) {
+      currentUser = sessionRes.data.session.user;
+      await loadUserData();
+      return;
+    }
+  } catch(e) { /* fall through to auth screen */ }
+  renderAuthScreen();
+}
+
+async function persist() {
+  if (!currentUser) return;
+  try {
+    await sb.from('app_state').upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() });
+  } catch(e) {
+    showToast("Erreur de sauvegarde — réessaie dans un instant.");
+  }
+}
+
+sb.auth.onAuthStateChange(function(event, session) {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    currentUser = session ? session.user : null;
+    if (currentUser) loadUserData();
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    state = freshDefaultState();
+    renderAuthScreen();
+  }
+});
+
+function renderAuthScreen() {
+  document.getElementById('psr-tabbar').innerHTML = '';
+  document.getElementById('psr-header-meta').innerHTML = '';
+  var html = '<div class="auth-screen"><div class="auth-box">';
+  html += '<div id="auth-error" class="auth-error" style="display:none;"></div>';
+  html += '<label>Email</label><input type="email" id="auth-email" autocomplete="email">';
+  html += '<label>Mot de passe</label><input type="password" id="auth-password" autocomplete="current-password">';
+  html += '<div class="auth-actions"><button class="btn-primary" onclick="PSR.authSignIn()">Se connecter</button>';
+  html += '<button class="btn-outline" onclick="PSR.authSignUp()">Créer un compte</button></div>';
+  html += '<div id="auth-status" class="auth-status"></div>';
+  html += '</div></div>';
+  document.getElementById('psr-content').innerHTML = html;
+}
+function setAuthError(msg) {
+  var el = document.getElementById('auth-error');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+function setAuthStatus(msg) {
+  var el = document.getElementById('auth-status');
+  if (el) el.textContent = msg || '';
+}
+
+/* ============================= HELPERS ============================= */
+
+function uid(prefix) { return prefix + '-' + Date.now() + '-' + Math.floor(Math.random()*1000); }
+function formatDateFr(iso) {
+  try { return new Date(iso).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'}); }
+  catch(e) { return iso || '—'; }
+}
+function esc(s) { return (s===undefined||s===null) ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function isExcluded(refOrId) {
+  return state.excludedListings.some(function(e){ return e.matchKey === refOrId; });
+}
+function showToast(msg) {
+  ui.toast = msg;
+  renderToast();
+  setTimeout(function(){ ui.toast = null; renderToast(); }, 4200);
+}
+function renderToast() {
+  var root = document.getElementById('psr-toast-root');
+  root.innerHTML = ui.toast ? ('<div class="toast">' + esc(ui.toast) + '</div>') : '';
+}
+function findSaved(id) { return state.savedListings.find(function(l){ return l.id === id; }); }
+function findProposal(id) { return state.currentProposals.find(function(p){ return p.id === id; }); }
+function getDD(sourceId) { return DUE_DILIGENCE[sourceId] || state.customDD[sourceId]; }
+function allExcludedMatchKeys() {
+  return state.excludedListings.map(function(e){ return e.matchKey; });
+}
+function visibleProposals() {
+  var excludedKeys = allExcludedMatchKeys();
+  return state.currentProposals.filter(function(p){ return excludedKeys.indexOf(p.ref) === -1 && excludedKeys.indexOf(p.id) === -1; });
+}
+
+/* ============================= RENDER: SHELL ============================= */
+
+function render() {
+  document.getElementById('psr-header-meta').innerHTML =
+    esc(new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})) +
+    '<br>' + state.savedListings.length + ' annonce(s) suivie(s)' +
+    (currentUser ? '<br>' + esc(currentUser.email) + ' · <a href="#" onclick="PSR.authSignOut();return false;" style="color:var(--brass);">Se déconnecter</a>' : '');
+  renderTabbar();
+  renderContent();
+  renderModal();
+  renderToast();
+}
+
+function renderTabbar() {
+  var tabs = [
+    {id:'recherche', label:'Recherche'},
+    {id:'saved', label:'Annonces sauvegardées', count: state.savedListings.length},
+    {id:'dd', label:'Due diligence'},
+    {id:'compare', label:'Comparaison'},
+    {id:'financing', label:'Financement et stress test', count: state.financingSelection.length}
+  ];
+  var html = tabs.map(function(t){
+    var count = t.count ? '<span class="tab-count">'+t.count+'</span>' : '';
+    return '<button class="tab-btn '+(ui.tab===t.id?'active':'')+'" onclick="PSR.setTab(\''+t.id+'\')">'+esc(t.label)+count+'</button>';
+  }).join('');
+  document.getElementById('psr-tabbar').innerHTML = html;
+}
+
+function renderContent() {
+  var el = document.getElementById('psr-content');
+  if (ui.tab === 'recherche') el.innerHTML = viewRecherche();
+  else if (ui.tab === 'saved') el.innerHTML = viewSaved();
+  else if (ui.tab === 'dd') el.innerHTML = viewDD();
+  else if (ui.tab === 'compare') el.innerHTML = viewCompare();
+  else if (ui.tab === 'financing') el.innerHTML = viewFinancing();
+}
+
+/* ============================= VIEW: RECHERCHE ============================= */
+
+function viewRecherche() {
+  var list = visibleProposals();
+  var html = '';
+  html += '<div class="eyebrow">Étape 1</div>';
+  html += '<h2 class="section-title">Lancer une recherche</h2>';
+  html += '<button class="btn-link" style="font-size:12px;margin-bottom:10px;" onclick="PSR.openModal(\'editCriteria\')">⚙ Modifier les caractéristiques de recherche</button>';
+  html += '<p class="section-sub">Sourcing sur Fusacq, Transentreprise (CCI/CMA IDF), C.R.A et Bpifrance Transmission — cible '+esc(state.searchCriteria.zone)+', CA '+esc(state.searchCriteria.caMin)+'–'+esc(state.searchCriteria.caMax)+', profil "belle endormie".</p>';
+  html += '<div class="info-banner"><b>Comment ça marche concrètement :</b> je ne peux pas déclencher moi-même une recherche depuis cette page — un artefact ne peut pas m\'appeler en direct (on l\'a déjà vérifié ensemble). Le bouton ci-dessous copie automatiquement un message dans ton presse-papier et enregistre ta demande. Colle-le-moi dans le chat, je fais la recherche réelle, puis je te redonne un bloc à coller ici pour remplacer les 5 propositions — en un clic, sans réécrire quoi que ce soit.</div>';
+
+  html += '<div class="launch-box">';
+  html += '<label style="font-weight:600;font-size:12.5px;display:block;margin-bottom:6px;">Instructions complémentaires (optionnel) — nouvelle zone géographique, secteur particulier, taille cible différente…</label>';
+  html += '<textarea class="guidance" id="psr-guidance" placeholder="Ex : élargis à Nord-Pas-de-Calais, secteur maintenance industrielle uniquement, CA jusqu\'à 2M€…"></textarea>';
+  html += '<div class="launch-row">';
+  html += '<button class="btn-brass" onclick="PSR.launchSearch()">Lancer la recherche</button>';
+  html += '<span style="font-size:11.5px;color:var(--slate);">'+state.searchRequests.length+' demande(s) enregistrée(s) au total</span>';
+  html += '</div></div>';
+
+  html += '<div class="eyebrow" style="margin-top:8px;">Résultat de la dernière analyse</div>';
+  html += '<h2 class="section-title">'+list.length+' proposition'+(list.length>1?'s':'')+'</h2>';
+  html += '<p class="section-sub">Vérifiées en ligne le '+esc(formatDateFr(state.currentProposalsUpdatedAt))+' — aucune annonce expirée dans cette sélection. Les annonces que tu as supprimées n\'apparaissent plus jamais ici, même après une nouvelle recherche.</p>';
+
+  if (list.length === 0) {
+    html += '<div class="empty-state"><span class="serif">Aucune proposition disponible</span>Toutes les propositions connues ont été écartées. Lance une nouvelle recherche.</div>';
+  } else {
+    html += '<div class="card-grid">';
+    list.forEach(function(p){ html += renderProposalCard(p); });
+    html += '</div>';
+  }
+  return html;
+}
+
+function statusChip(status) {
+  if (status==='ok') return '<span class="chip chip-ok">OK</span>';
+  if (status==='warn') return '<span class="chip chip-warn">ATTENTION</span>';
+  return '<span class="chip chip-check">À VÉRIFIER</span>';
+}
+
+function renderCriteriaList(criteria) {
+  return '<ul class="criteria-list">' + criteria.map(function(c){
+    return '<li>'+statusChip(c.status)+'<span class="crit-text"><b>'+ (c.n) +'. '+esc(c.label)+'.</b> '+esc(c.note)+'</span></li>';
+  }).join('') + '</ul>';
+}
+
+function renderVigilanceBox(vigilance) {
+  if (!vigilance || vigilance.length===0) return '';
+  var levelLabel = {eleve:'ÉLEVÉ', modere:'MODÉRÉ', faible:'FAIBLE'};
+  var html = '<div class="vigilance-box"><div class="v-title">Points de vigilance</div>';
+  vigilance.forEach(function(v){
+    html += '<div class="v-item"><b>['+ (levelLabel[v.level]||v.level.toUpperCase()) +']</b> '+esc(v.label)+' — '+esc(v.note)+'</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function overallStamp(p) {
+  var warnCount = p.criteria.filter(function(c){return c.status==='warn';}).length;
+  var okCount = p.criteria.filter(function(c){return c.status==='ok';}).length;
+  var hasHighVigilance = (p.vigilance||[]).some(function(v){return v.level==='eleve';});
+  var cls = (warnCount>0 || hasHighVigilance) ? 'warn' : '';
+  return '<div class="stamp '+cls+'"><span class="stamp-big">'+okCount+'/5</span>confirmés</div>';
+}
+
+function renderProposalCard(p) {
+  var isSaved = state.savedListings.some(function(l){ return l.sourceId === p.id; });
+  var html = '<div class="dossier'+(p.topPick?' top-pick':'')+'">';
+  if (p.topPick) html += '<div class="top-pick-flag">Priorité</div>';
+  html += '<div class="dossier-head">';
+  html += '<div><div class="dossier-ref mono">'+esc(p.source)+' · Réf. '+esc(p.ref)+'</div>';
+  html += '<div class="dossier-title">'+esc(p.name)+'</div>';
+  html += '<div class="dossier-loc">'+esc(p.sector)+' — '+esc(p.location)+'</div></div>';
+  html += overallStamp(p);
+  html += '</div>';
+  html += '<div class="dossier-body">';
+  html += '<div class="pitch">'+esc(p.pitch)+'</div>';
+  html += '<div class="figures-grid">';
+  html += figureBlock('Chiffre d\'affaires', p.ca);
+  html += figureBlock('EBITDA'+(p.ebitdaIsEstimate?' (estimé)':''), p.ebitda);
+  html += figureBlock('Résultat net', p.resultat);
+  html += figureBlock('Prix indicatif', p.prix, p.prixDetail);
+  html += figureBlock('Multiple', p.multiple);
+  html += '</div>';
+  html += renderCriteriaList(p.criteria);
+  html += renderVigilanceBox(p.vigilance);
+  html += '<div class="source-line">Source : <a href="'+esc(p.url)+'" target="_blank" rel="noopener">'+esc(p.source)+' — '+esc(p.ref)+'</a> · '+esc(p.lastChecked)+'</div>';
+  html += '<div class="dossier-actions">';
+  if (isSaved) {
+    html += '<button class="btn-outline btn-sm" disabled>✓ Déjà sauvegardée</button>';
+  } else {
+    html += '<button class="btn-primary btn-sm" onclick="PSR.saveProposal(\''+p.id+'\')">Sauvegarder</button>';
+  }
+  html += '<button class="btn-danger btn-sm" onclick="PSR.openDeleteModal(\'proposal\',\''+p.id+'\')">Supprimer</button>';
+  html += '</div></div></div>';
+  return html;
+}
+
+function figureBlock(label, value, note) {
+  return '<div class="figure"><div class="figure-label">'+esc(label)+'</div><div class="figure-value">'+esc(value)+'</div>' + (note?'<div class="figure-note">'+esc(note)+'</div>':'') + '</div>';
+}
+
+/* ============================= VIEW: SAVED ============================= */
+
+function viewSaved() {
+  var html = '';
+  html += '<div class="eyebrow">Espace de travail</div>';
+  html += '<h2 class="section-title">Annonces sauvegardées</h2>';
+  html += '<p class="section-sub">Organise par groupe (zone géographique, priorité, secteur…), ajoute des annonces trouvées ailleurs, et lance une due diligence quand tu es prêt.</p>';
+
+  html += '<div class="launch-row" style="margin-bottom:18px;">';
+  html += '<button class="btn-primary btn-sm" onclick="PSR.openModal(\'addListing\')">+ Ajouter une annonce manuellement</button>';
+  html += '<button class="btn-outline btn-sm" onclick="PSR.openModal(\'addGroup\')">+ Créer un groupe</button>';
+  html += '<button class="btn-outline btn-sm" onclick="PSR.openModal(\'checkExpired\')">Analyser les annonces supprimées</button>';
+  html += '</div>';
+
+  if (state.groups.length > 0) {
+    html += '<div class="group-filter-row">';
+    html += '<button class="tag-btn '+(ui.groupFilter===null?'active':'')+'" onclick="PSR.setGroupFilter(null)">Tout ('+state.savedListings.length+')</button>';
+    state.groups.forEach(function(g){
+      var count = state.savedListings.filter(function(l){ return (l.groups||[]).indexOf(g.id) !== -1; }).length;
+      html += '<button class="tag-btn '+(ui.groupFilter===g.id?'active':'')+'" onclick="PSR.setGroupFilter(\''+g.id+'\')">'+esc(g.name)+' ('+count+')</button>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="group-filter-row">';
+  html += '<button class="tag-btn '+(ui.statusFilter===null?'active':'')+'" onclick="PSR.setStatusFilter(null)">Tous les statuts</button>';
+  STATUS_OPTIONS.forEach(function(o){
+    var count = state.savedListings.filter(function(l){ return (l.status||'a_qualifier')===o.id; }).length;
+    if (count === 0) return;
+    html += '<button class="tag-btn status-'+o.id+' '+(ui.statusFilter===o.id?'active':'')+'" onclick="PSR.setStatusFilter(\''+o.id+'\')">'+esc(o.label)+' ('+count+')</button>';
+  });
+  html += '</div>';
+
+  var filtered = state.savedListings.filter(function(l){
+    return (ui.groupFilter === null || (l.groups||[]).indexOf(ui.groupFilter) !== -1)
+      && (ui.statusFilter === null || (l.status||'a_qualifier') === ui.statusFilter);
+  });
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state"><span class="serif">Aucune annonce ici</span>Sauvegarde une proposition depuis l\'onglet Recherche, ou ajoute-en une manuellement.</div>';
+  } else {
+    html += '<div class="card-grid">';
+    filtered.forEach(function(l){ html += renderSavedCard(l); });
+    html += '</div>';
+  }
+  return html;
+}
+
+function renderSavedCard(l) {
+  var st = l.status || 'a_qualifier';
+  var html = '<div class="dossier status-'+st+'">';
+  html += '<div class="dossier-head"><div>';
+  html += '<div class="dossier-ref mono">'+esc(l.source||'Ajout manuel')+(l.ref?(' · Réf. '+esc(l.ref)):'')+'</div>';
+  html += '<div class="dossier-title">'+esc(l.name)+'</div>';
+  html += '<div class="dossier-loc">'+esc(l.sector||'')+(l.location?(' — '+esc(l.location)):'')+'</div>';
+  html += '</div>';
+  html += '<select class="status-select status-'+st+'" onchange="PSR.updateStatus(\''+l.id+'\',this.value)">';
+  STATUS_OPTIONS.forEach(function(o){ html += '<option value="'+o.id+'" '+(o.id===st?'selected':'')+'>'+esc(o.label)+'</option>'; });
+  html += '</select>';
+  html += '</div>';
+  html += '<div class="dossier-body">';
+  if (l.pitch) html += '<div class="pitch">'+esc(l.pitch)+'</div>';
+  html += '<div class="figures-grid">';
+  html += figureBlock('Chiffre d\'affaires', l.ca||'—');
+  html += figureBlock('EBITDA', l.ebitda||'—');
+  html += figureBlock('Résultat net', l.resultat||'—');
+  html += figureBlock('Prix indicatif', l.prix||'—');
+  html += '</div>';
+  if (l.salaireDirigeant) {
+    html += '<div class="figures-grid" style="margin-top:-6px;margin-bottom:14px;">' + figureBlock('Salaire du dirigeant', l.salaireDirigeant) + '</div>';
+  }
+
+  html += '<div style="margin-bottom:12px;">';
+  html += (l.groups||[]).map(function(gid){
+    var g = state.groups.find(function(x){return x.id===gid;});
+    return g ? '<span class="tag">'+esc(g.name)+'</span>' : '';
+  }).join('');
+  html += '<button class="btn-link" style="font-size:11px;margin-left:4px;" onclick="PSR.openModal(\'assignGroups\',\''+l.id+'\')">gérer les groupes</button>';
+  html += '</div>';
+
+  if (l.url) html += '<div class="source-line">Source : <a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.url)+'</a></div>';
+
+  html += '<label style="font-size:11px;color:var(--slate);margin-top:6px;display:block;">Notes personnelles</label>';
+  html += '<textarea class="notes-box" placeholder="Impressions, prochaine étape, ce qui te fait hésiter…" onchange="PSR.updateNotes(\''+l.id+'\',this.value)">'+esc(l.notes||'')+'</textarea>';
+
+  html += '<div class="dossier-actions">';
+  if (getDD(l.sourceId)) {
+    html += '<button class="btn-brass btn-sm" onclick="PSR.gotoDD(\''+l.sourceId+'\')">Voir la Due Diligence</button>';
+  } else {
+    html += '<button class="btn-outline btn-sm" onclick="PSR.requestDD(\''+l.id+'\')">Demander une Due Diligence</button>';
+  }
+  html += '<button class="btn-outline btn-sm" onclick="PSR.toggleCompareSelection(\''+l.id+'\')">'+(state.comparisonSelection.indexOf(l.id)!==-1?'✓ Dans la comparaison':'Ajouter à la comparaison')+'</button>';
+  html += '<button class="btn-outline btn-sm" onclick="PSR.toggleFinancingSelection(\''+l.id+'\')">'+(state.financingSelection.indexOf(l.id)!==-1?'✓ Dans le stress test':'Ajouter au stress test')+'</button>';
+  html += '<button class="btn-danger btn-sm" onclick="PSR.openDeleteModal(\'saved\',\''+l.id+'\')">Supprimer</button>';
+  html += '</div></div></div>';
+  return html;
+}
+
+/* ============================= VIEW: DUE DILIGENCE ============================= */
+
+function viewDD() {
+  var withDD = state.savedListings.filter(function(l){ return getDD(l.sourceId); });
+  var withoutDD = state.savedListings.filter(function(l){ return !getDD(l.sourceId); });
+  var html = '';
+  html += '<div class="eyebrow">Étape 3</div>';
+  html += '<h2 class="section-title">Due diligence</h2>';
+  html += '<p class="section-sub">Analyse structurée en 7 sections : fiche d\'identité, 5 critères, marché & avantage concurrentiel, finances & montage, points de vigilance, atouts & leviers, verdict & plan d\'action.</p>';
+
+  var navItems = withDD.map(function(l){ return {id:l.sourceId, name:l.name}; });
+  if (navItems.length === 0) {
+    html += '<div class="empty-state"><span class="serif">Aucune due diligence générée pour l\'instant</span>Va dans "Annonces sauvegardées" et clique sur "Demander une Due Diligence" pour une annonce.</div>';
+    if (withoutDD.length) {
+      html += '<div style="margin-top:10px;text-align:center;font-size:12.5px;color:var(--slate);">'+withoutDD.length+' annonce(s) sauvegardée(s) en attente de due diligence.</div>';
+    }
+    return html;
+  }
+
+  if (!ui.ddSelected || !getDD(ui.ddSelected)) ui.ddSelected = navItems[0].id;
+
+  html += '<div class="dd-nav">';
+  navItems.forEach(function(item){
+    html += '<button class="btn-outline btn-sm '+(ui.ddSelected===item.id?'btn-primary':'')+'" onclick="PSR.selectDD(\''+item.id+'\')">'+esc(item.name.length>38?item.name.slice(0,38)+'…':item.name)+'</button>';
+  });
+  html += '</div>';
+
+  html += renderDDDoc(ui.ddSelected);
+  return html;
+}
+
+function levelClass(lvl) {
+  var l = (lvl||'').toUpperCase();
+  if (l==='ELEVE'||l==='ÉLEVÉ') return 'chip-warn';
+  if (l==='MODERE'||l==='MODÉRÉ') return 'chip-check';
+  return 'chip-ok';
+}
+
+function renderDDDoc(sourceId) {
+  var dd = getDD(sourceId);
+  var proposal = findProposal(sourceId);
+  var saved = state.savedListings.find(function(l){return l.sourceId===sourceId;});
+  var name = proposal ? proposal.name : (saved ? saved.name : sourceId);
+  var ref = proposal ? (proposal.source+' · '+proposal.ref) : (saved && saved.ref ? saved.ref : '');
+  var html = '<div class="dd-doc">';
+  html += '<div class="dd-doc-header"><div>';
+  html += '<div class="dd-doc-ref mono">'+esc(ref)+' · Analyse du '+esc(dd.dateAnalyse)+'</div>';
+  html += '<div class="dd-doc-title">'+esc(name)+'</div>';
+  html += '</div><div class="dd-verdict">'+esc(dd.verdict)+'</div></div>';
+
+  dd.sections.forEach(function(sec){
+    html += '<div class="dd-section"><h3>'+esc(sec.h)+'</h3>';
+    if (sec.table) {
+      html += '<table class="dd-table">' + sec.table.map(function(row){
+        return '<tr><th style="width:34%;">'+esc(row[0])+'</th><td>'+esc(row[1])+'</td></tr>';
+      }).join('') + '</table>';
+    }
+    if (sec.criteriaTable) {
+      html += '<table class="dd-table"><tr><th>Critère</th><th>Statut</th><th>Observation</th></tr>';
+      html += sec.criteriaTable.map(function(c){
+        return '<tr><td>'+c.n+'. '+esc(c.label)+'</td><td>'+statusChip(c.status)+'</td><td>'+esc(c.note)+'</td></tr>';
+      }).join('') + '</table>';
+      if (sec.verdictLine) html += '<div class="dd-para"><b>'+esc(sec.verdictLine)+'</b></div>';
+    }
+    if (sec.vigilanceTable) {
+      html += '<table class="dd-table"><tr><th>Point de vigilance</th><th>Niveau</th><th>Action recommandée</th></tr>';
+      html += sec.vigilanceTable.map(function(v){
+        return '<tr><td>'+esc(v.label)+'</td><td><span class="chip '+levelClass(v.level)+'">'+esc(v.level)+'</span></td><td>'+esc(v.note)+'</td></tr>';
+      }).join('') + '</table>';
+    }
+    (sec.sub||[]).forEach(function(s){
+      html += '<h4>'+esc(s.h4)+'</h4>';
+      if (s.paras) s.paras.forEach(function(p){ html += '<div class="dd-para">'+esc(p)+'</div>'; });
+      if (s.list) html += '<ul class="dd-list">'+s.list.map(function(li){return '<li>'+esc(li)+'</li>';}).join('')+'</ul>';
+      if (s.table2) {
+        html += '<table class="dd-table"><tr>'+s.table2.headers.map(function(h){return '<th>'+esc(h)+'</th>';}).join('')+'</tr>';
+        html += s.table2.rows.map(function(r){ return '<tr>'+r.map(function(c){return '<td class="num">'+esc(c)+'</td>';}).join('')+'</tr>'; }).join('');
+        html += '</table>';
+      }
+    });
+    if (sec.verdictText) html += '<div class="dd-para" style="font-weight:600;">'+esc(sec.verdictText)+'</div>';
+    html += '</div>';
+  });
+
+  html += renderQABox(sourceId, 'dd');
+  html += '</div>';
+  return html;
+}
+
+/* ============================= QUESTION / ANSWER BOX ============================= */
+
+function renderQABox(key, context) {
+  var log = state.questionsLog[key] || [];
+  var html = '<div class="qa-box">';
+  html += '<div class="eyebrow">Poser une question à Claude</div>';
+  html += '<p style="font-size:12px;color:var(--slate);margin-bottom:10px;line-height:1.5;">Écris ta question, clique sur "Préparer la question" : elle est enregistrée ici et copiée automatiquement — colle-la dans le chat, puis colle ma réponse ci-dessous une fois reçue.</p>';
+  html += '<textarea class="guidance" id="psr-question-'+esc(key)+'" placeholder="Ex : la concentration client est-elle un vrai point bloquant ici ?" style="min-height:50px;"></textarea>';
+  html += '<div style="margin-top:8px;"><button class="btn-outline btn-sm" onclick="PSR.prepareQuestion(\''+esc(key)+'\',\''+esc(context)+'\')">Préparer la question</button></div>';
+  if (log.length) {
+    html += '<div style="margin-top:16px;">';
+    log.map(function(qa,idx){ return {qa:qa, idx:idx}; }).reverse().forEach(function(item){
+      var qa = item.qa, idx = item.idx;
+      html += '<div class="qa-entry"><div class="qa-q">Q — '+esc(qa.q)+'</div>';
+      if (qa.a) {
+        html += '<div class="qa-a">'+esc(qa.a)+'</div>';
+      } else {
+        html += '<div class="qa-pending">En attente — colle ma réponse ci-dessous une fois reçue dans le chat.</div>';
+        html += '<textarea class="list-textarea" id="psr-answer-'+esc(key)+'-'+idx+'" style="min-height:44px;" placeholder="Colle ma réponse ici…"></textarea>';
+        html += '<div style="margin-top:4px;"><button class="btn-primary btn-sm" onclick="PSR.applyAnswer(\''+esc(key)+'\','+idx+')">Enregistrer la réponse</button></div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ============================= VIEW: COMPARE ============================= */
+
+function viewCompare() {
+  var html = '';
+  html += '<div class="eyebrow">Étape 4</div>';
+  html += '<h2 class="section-title">Comparaison</h2>';
+  html += '<p class="section-sub">Sélectionne au moins deux annonces sauvegardées pour générer un tableau récapitulatif des points clés.</p>';
+
+  if (state.savedListings.length === 0) {
+    html += '<div class="empty-state"><span class="serif">Rien à comparer pour l\'instant</span>Sauvegarde d\'abord des annonces depuis l\'onglet Recherche.</div>';
+    return html;
+  }
+
+  html += '<div class="select-row">';
+  state.savedListings.forEach(function(l){
+    var checked = state.comparisonSelection.indexOf(l.id) !== -1;
+    html += '<div class="select-chip '+(checked?'selected':'')+'" onclick="PSR.toggleCompareSelection(\''+l.id+'\')"><input type="checkbox" '+(checked?'checked':'')+'/>'+esc(l.name)+'</div>';
+  });
+  html += '</div>';
+
+  var selected = state.savedListings.filter(function(l){ return state.comparisonSelection.indexOf(l.id) !== -1; });
+  if (selected.length < 2) {
+    html += '<div class="empty-state"><span class="serif">Sélectionne au moins 2 annonces</span>Coche-les ci-dessus pour construire le tableau comparatif.</div>';
+    return html;
+  }
+
+  var rows = [
+    {label:"Secteur", get:function(l){return l.sector||'—';}},
+    {label:"Localisation", get:function(l){return l.location||'—';}},
+    {label:"Chiffre d'affaires", get:function(l){return l.ca||'—';}},
+    {label:"EBITDA", get:function(l){return l.ebitda||'—';}},
+    {label:"Résultat net", get:function(l){return l.resultat||'—';}},
+    {label:"Prix indicatif", get:function(l){return l.prix||'—';}},
+    {label:"Multiple", get:function(l){return l.multiple||'—';}},
+    {label:"Critères validés", get:function(l){
+      var p = findProposal(l.sourceId);
+      if (!p) return '—';
+      var ok = p.criteria.filter(function(c){return c.status==='ok';}).length;
+      return ok + ' / 5';
+    }},
+    {label:"Vigilance majeure", get:function(l){
+      var p = findProposal(l.sourceId);
+      if (!p || !p.vigilance || !p.vigilance.length) return 'Aucune identifiée';
+      var high = p.vigilance.filter(function(v){return v.level==='eleve';});
+      return high.length ? high.map(function(v){return v.label;}).join(' · ') : p.vigilance[0].label;
+    }},
+    {label:"Verdict DD", get:function(l){
+      var dd = getDD(l.sourceId);
+      return dd ? dd.verdict : 'Non générée';
+    }},
+    {label:"AJOUT — Financement : statut", get:function(l){
+      if (state.financingSelection.indexOf(l.id) === -1) return 'Pas encore dans Financement et stress test';
+      var m = computeFinancingModel(getFinancingData(l));
+      return m.dealInteressant ? 'OK — critères remplis' : 'À ajuster';
+    }},
+    {label:"AJOUT — Cash-flow année 1", get:function(l){
+      if (state.financingSelection.indexOf(l.id) === -1) return '—';
+      return fmtEUR(computeFinancingModel(getFinancingData(l)).cashFlow);
+    }},
+    {label:"AJOUT — Remboursement / EBE", get:function(l){
+      if (state.financingSelection.indexOf(l.id) === -1) return '—';
+      var r = computeFinancingModel(getFinancingData(l)).ratioRembEBE;
+      return r===null ? '—' : fmtPct1(r*100);
+    }},
+    {label:"AJOUT — Score global", get:function(l){
+      var p = findProposal(l.sourceId);
+      var dd = getDD(l.sourceId);
+      var inFin = state.financingSelection.indexOf(l.id) !== -1;
+      var parts = [];
+      var allGood = true;
+      if (p) {
+        var okCount = p.criteria.filter(function(c){return c.status==='ok';}).length;
+        var highVig = p.vigilance && p.vigilance.some(function(v){return v.level==='eleve';});
+        parts.push(okCount+'/5 critères');
+        if (okCount < 4 || highVig) allGood = false;
+      }
+      if (dd) {
+        parts.push('DD ' + (dd.verdictTone==='ok' ? 'favorable' : dd.verdictTone==='attention' ? 'à négocier' : 'défavorable'));
+        if (dd.verdictTone !== 'ok') allGood = false;
+      }
+      if (inFin) {
+        var m = computeFinancingModel(getFinancingData(l));
+        parts.push('financement ' + (m.dealInteressant ? 'OK' : 'à ajuster'));
+        if (!m.dealInteressant) allGood = false;
+      }
+      if (!parts.length) return 'Données insuffisantes';
+      return (allGood ? '✓ ' : '⚠ ') + parts.join(' · ');
+    }}
+  ];
+
+  html += '<div class="compare-table-wrap"><table class="compare-table"><tr><th>Critère</th>' + selected.map(function(l){return '<th>'+esc(l.name)+'</th>';}).join('') + '</tr>';
+  rows.forEach(function(r){
+    html += '<tr><td>'+esc(r.label)+'</td>' + selected.map(function(l){return '<td>'+esc(r.get(l))+'</td>';}).join('') + '</tr>';
+  });
+  html += '</table></div>';
+
+  var compareKey = 'compare-' + selected.map(function(l){return l.id;}).sort().join('-');
+  html += renderQABox(compareKey, 'compare');
+
+  return html;
+}
+
+/* ============================= MODALS ============================= */
+
+var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true };
+
+function renderModal() {
+  var root = document.getElementById('psr-modal-root');
+  if (!ui.modal) { root.innerHTML = ''; return; }
+  var wide = WIDE_MODALS[ui.modal] ? ' wide' : '';
+  var html = '<div class="modal-overlay" onclick="PSR.closeModalIfBackdrop(event)"><div class="modal-box'+wide+'">';
+  html += '<button class="modal-close-x" onclick="PSR.closeModal()">×</button>';
+
+  if (ui.modal === 'addListing') html += modalAddListing();
+  else if (ui.modal === 'addGroup') html += modalAddGroup();
+  else if (ui.modal === 'assignGroups') html += modalAssignGroups(ui.modalCtx);
+  else if (ui.modal === 'deleteReason') html += modalDeleteReason(ui.modalCtx);
+  else if (ui.modal === 'checkExpired') html += modalCheckExpired();
+  else if (ui.modal === 'requestDD') html += modalRequestDD(ui.modalCtx);
+  else if (ui.modal === 'questionPrepared') html += modalQuestionPrepared(ui.modalCtx);
+  else if (ui.modal === 'searchPrepared') html += modalSearchPrepared(ui.modalCtx);
+  else if (ui.modal === 'editCriteria') html += modalEditCriteria();
+
+  html += '</div></div>';
+  root.innerHTML = html;
+}
+
+function modalEditCriteria() {
+  var c = state.searchCriteria;
+  var html = '<div class="modal-title">Modifier les caractéristiques de recherche</div>';
+  html += '<div class="modal-sub">Ce sont les paramètres de base utilisés à chaque "Lancer la recherche". Modifie-les ici — pas besoin de tout réécrire dans le chat à chaque fois.</div>';
+
+  html += '<div class="form-divider">Zone &amp; taille cible</div>';
+  html += '<label>Zone géographique</label><input type="text" id="ec-zone" value="'+esc(c.zone)+'">';
+  html += '<div class="two-col"><div><label>CA minimum</label><input type="text" id="ec-caMin" value="'+esc(c.caMin)+'"></div><div><label>CA maximum</label><input type="text" id="ec-caMax" value="'+esc(c.caMax)+'"></div></div>';
+
+  html += '<div class="form-divider">Profil recherché</div>';
+  html += '<label>Description ("belle endormie")</label><textarea id="ec-profil">'+esc(c.profil)+'</textarea>';
+
+  html += '<div class="form-divider">Les 5 critères obligatoires (tous doivent être cochés)</div>';
+  html += '<label>Un critère par ligne</label><textarea class="list-textarea" id="ec-criteria5">'+esc(c.criteria5.join('\n'))+'</textarea>';
+  html += '<label>Critère optionnel n°6</label><input type="text" id="ec-criteria6" value="'+esc(c.criteria6)+'">';
+
+  html += '<div class="form-divider">Points de vigilance — exclusion automatique si l\'un d\'eux est présent</div>';
+  html += '<label>Un point par ligne</label><textarea class="list-textarea" id="ec-vigilance">'+esc(c.vigilance.join('\n'))+'</textarea>';
+
+  html += '<div class="form-divider">Objectif de prix &amp; financement</div>';
+  html += '<label>Objectif</label><textarea id="ec-objectif">'+esc(c.objectif)+'</textarea>';
+  html += '<label>Logique de financement</label><textarea id="ec-financement">'+esc(c.financement)+'</textarea>';
+
+  html += '<div class="form-divider">Après acquisition</div>';
+  html += '<label>Pilotage / gérant</label><textarea id="ec-pilotage">'+esc(c.pilotage)+'</textarea>';
+  html += '<label>Logique de développement (build-up)</label><textarea id="ec-developpement">'+esc(c.developpement)+'</textarea>';
+
+  html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.resetCriteria()">Réinitialiser aux valeurs d\'origine</button><button class="btn-primary" onclick="PSR.submitEditCriteria()">Enregistrer</button></div>';
+  return html;
+}
+
+function modalCopyBox(text) {
+  return '<textarea class="readonly-copy" id="psr-copy-text" readonly>'+esc(text)+'</textarea>' +
+    '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Fermer</button>' +
+    '<button class="btn-primary" onclick="PSR.copyText()">Copier</button></div>';
+}
+
+function modalAddListing() {
+  var html = '<div class="modal-title">Ajouter une annonce manuellement</div>';
+  html += '<div class="modal-sub">Colle les informations d\'une annonce trouvée ailleurs (site, réseau, bouche-à-oreille…).</div>';
+  html += '<label>Nom de l\'entreprise *</label><input type="text" id="af-name" placeholder="Ex : Cabinet de métrés TCE — Yvelines">';
+  html += '<div class="two-col"><div><label>Secteur</label><input type="text" id="af-sector"></div><div><label>Localisation</label><input type="text" id="af-location"></div></div>';
+  html += '<div class="two-col"><div><label>Source</label><input type="text" id="af-source" placeholder="Ex : Fusacq, réseau perso…"></div><div><label>Référence</label><input type="text" id="af-ref"></div></div>';
+  html += '<label>URL de l\'annonce</label><input type="url" id="af-url" placeholder="https://…">';
+  html += '<div class="two-col"><div><label>Chiffre d\'affaires</label><input type="text" id="af-ca" placeholder="Ex : 800 k€"></div><div><label>EBITDA estimé</label><input type="text" id="af-ebitda" placeholder="Ex : 120 k€ (15%)"></div></div>';
+  html += '<div class="two-col"><div><label>Résultat net</label><input type="text" id="af-resultat"></div><div><label>Prix indicatif</label><input type="text" id="af-prix"></div></div>';
+  html += '<label>Salaire du dirigeant (si connu)</label><input type="text" id="af-salaire" placeholder="Ex : 45 k€ brut/an — laisser vide si inconnu">';
+  html += '<label>Notes / pitch</label><textarea id="af-pitch" placeholder="Pourquoi ce dossier t\'intéresse, ce que tu sais déjà…"></textarea>';
+  html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Annuler</button><button class="btn-primary" onclick="PSR.submitAddListing()">Ajouter</button></div>';
+  return html;
+}
+
+function modalAddGroup() {
+  var html = '<div class="modal-title">Créer un groupe</div>';
+  html += '<div class="modal-sub">Ex : zone géographique (Seine-et-Marne), niveau de priorité (Top pick), statut (Contact pris)…</div>';
+  html += '<label>Nom du groupe *</label><input type="text" id="ag-name" placeholder="Ex : Seine-et-Marne">';
+  html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Annuler</button><button class="btn-primary" onclick="PSR.submitAddGroup()">Créer</button></div>';
+  return html;
+}
+
+function modalAssignGroups(listingId) {
+  var l = findSaved(listingId);
+  var html = '<div class="modal-title">Groupes — '+esc(l?l.name:'')+'</div>';
+  if (state.groups.length === 0) {
+    html += '<div class="modal-sub">Aucun groupe créé pour l\'instant.</div>';
+    html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Fermer</button><button class="btn-primary" onclick="PSR.switchModal(\'addGroup\')">Créer un groupe</button></div>';
+    return html;
+  }
+  html += '<div class="modal-sub">Coche les groupes auxquels rattacher cette annonce.</div>';
+  html += '<div class="radio-row">';
+  state.groups.forEach(function(g){
+    var checked = l && (l.groups||[]).indexOf(g.id) !== -1;
+    html += '<label><input type="checkbox" data-group="'+g.id+'" '+(checked?'checked':'')+'> '+esc(g.name)+'</label>';
+  });
+  html += '</div>';
+  html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Annuler</button><button class="btn-primary" onclick="PSR.submitAssignGroups(\''+listingId+'\')">Enregistrer</button></div>';
+  return html;
+}
+
+function modalDeleteReason(ctx) {
+  var label = ctx.type === 'proposal' ? (findProposal(ctx.id)||{}).name : (findSaved(ctx.id)||{}).name;
+  var html = '<div class="modal-title">Supprimer — '+esc(label||'')+'</div>';
+  html += '<div class="modal-sub">Indique pourquoi. Cette annonce ne te sera plus jamais proposée, dans cette page ou lors d\'une future recherche.</div>';
+  html += '<div class="radio-row">';
+  ['Annonce expirée','Prix trop élevé','Ne correspond pas au profil','Concentration client rédhibitoire','Autre'].forEach(function(r, i){
+    html += '<label><input type="radio" name="del-reason" value="'+esc(r)+'" '+(i===0?'checked':'')+'> '+esc(r)+'</label>';
+  });
+  html += '</div>';
+  html += '<label>Précision (optionnel)</label><textarea id="del-detail" placeholder="Détail de la raison…"></textarea>';
+  html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Annuler</button><button class="btn-danger" style="background:var(--vermillion);color:#fff;" onclick="PSR.confirmDelete()">Confirmer la suppression</button></div>';
+  return html;
+}
+
+function modalCheckExpired() {
+  var withUrl = state.savedListings.filter(function(l){ return l.url; });
+  var html = '<div class="modal-title">Analyser les annonces supprimées</div>';
+  if (withUrl.length === 0) {
+    html += '<div class="modal-sub">Aucune annonce sauvegardée n\'a d\'URL renseignée — rien à vérifier pour l\'instant.</div>';
+    html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Fermer</button></div>';
+    return html;
+  }
+  html += '<div class="modal-sub">Je ne peux pas vérifier des liens en direct depuis cette page. Copie ce message et colle-le dans le chat : je vérifie chaque annonce en ligne et te dis lesquelles sont expirées, pour que tu puisses les supprimer ici (ce qui les exclura définitivement).</div>';
+  var text = "Vérifie si ces annonces sont toujours actives en ligne :\n\n" + withUrl.map(function(l,i){
+    return (i+1)+". "+l.name+" — "+l.url;
+  }).join("\n");
+  html += modalCopyBox(text);
+  return html;
+}
+
+var DD_JSON_SCHEMA_HINT =
+  'Réponds avec UNIQUEMENT un bloc ```json contenant un objet unique, ce schéma exact :\n' +
+  '{\n' +
+  '  "verdict": "ex: DOSSIER ÉLIGIBLE — À CONTACTER", "verdictTone": "ok|attention|ko",\n' +
+  '  "dateAnalyse": "JJ mois AAAA",\n' +
+  '  "sections": [\n' +
+  '    {"h":"1. Fiche d\'identité de l\'entreprise", "table":[["Référence","..."],["Activité","..."],["Localisation","..."],["Ancienneté","..."],["CA","..."],["Prix demandé","..."]]},\n' +
+  '    {"h":"2. Analyse des 5 critères d\'acquisition", "criteriaTable":[\n' +
+  '      {"n":1,"label":"Marché stable/croissant","status":"ok|check|warn","note":"..."},\n' +
+  '      {"n":2,"label":"Revenus récurrents","status":"ok|check|warn","note":"..."},\n' +
+  '      {"n":3,"label":"EBITDA > 15 %","status":"ok|check|warn","note":"..."},\n' +
+  '      {"n":4,"label":"Faible dépendance clients","status":"ok|check|warn","note":"..."},\n' +
+  '      {"n":5,"label":"Avantage concurrentiel","status":"ok|check|warn","note":"..."}\n' +
+  '    ], "verdictLine":"synthèse sur les 5 critères"},\n' +
+  '    {"h":"3. Analyse sectorielle et avantages concurrentiels", "sub":[{"h4":"3.1 ...","paras":["...","..."]}]},\n' +
+  '    {"h":"4. Analyse financière", "table":[["CA","..."],["EBE retraité","..."],["Prix demandé","..."],["Multiple","..."]], "sub":[{"h4":"4.1 Points de vérification comptable","list":["...","..."]}]},\n' +
+  '    {"h":"5. Points de vigilance", "vigilanceTable":[{"label":"...","level":"ELEVE|MODERE|FAIBLE","note":"..."}]},\n' +
+  '    {"h":"6. Atouts confirmés et leviers de création de valeur", "sub":[{"h4":"6.1 Atouts confirmés","list":["...","..."]},{"h4":"6.2 Leviers de création de valeur","list":["...","..."]}]},\n' +
+  '    {"h":"7. Verdict et plan d\'action", "verdictText":"...", "sub":[{"h4":"7.1 Checklist avant contact","list":["...","..."]},{"h4":"7.2 Questions prioritaires au cédant","list":["...","..."]}]}\n' +
+  '  ]\n' +
+  '}';
+
+function buildDDRequestPrompt(l) {
+  return [
+    "Fais-moi la due diligence complète du dossier suivant, avec la structure habituelle en 7 sections.",
+    "",
+    "Nom : " + (l.name||''),
+    "Secteur : " + (l.sector||'—'),
+    "Localisation : " + (l.location||'—'),
+    "Source : " + (l.source||'—') + (l.ref?(' / Réf. '+l.ref):''),
+    "URL : " + (l.url||'—'),
+    "CA : " + (l.ca||'—'),
+    "EBITDA : " + (l.ebitda||'—'),
+    "Résultat net : " + (l.resultat||'—'),
+    "Prix indicatif : " + (l.prix||'—'),
+    "Salaire dirigeant : " + (l.salaireDirigeant||'—'),
+    "Notes : " + (l.notes || l.pitch || '—'),
+    "",
+    DD_JSON_SCHEMA_HINT
+  ].join("\n");
+}
+
+function modalRequestDD(listingId) {
+  var l = findSaved(listingId);
+  if (!l) return '<div class="modal-title">Annonce introuvable</div>';
+  var text = buildDDRequestPrompt(l);
+  var html = '<div class="modal-title">Demander une Due Diligence</div>';
+  html += '<div class="modal-sub">Déjà copié dans ton presse-papier — colle dans le chat. Je fais l\'analyse complète (financier, commercial, opérationnel, juridique, structuration, création de valeur) et je te redonne un bloc JSON à coller ci-dessous pour l\'installer directement dans l\'onglet Due diligence.</div>';
+  html += modalCopyBox(text);
+  html += '<div class="paste-box">';
+  html += '<label style="margin-top:0;">Une fois ma réponse reçue : colle ici le bloc JSON</label>';
+  html += '<textarea class="list-textarea" id="psr-dd-paste-'+listingId+'" placeholder="Colle ici le bloc ```json que je te donne dans le chat…"></textarea>';
+  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-primary" onclick="PSR.applyCustomDD(\''+listingId+'\')">Installer cette Due Diligence</button></div>';
+  html += '</div>';
+  return html;
+}
+
+function modalQuestionPrepared(ctx) {
+  var html = '<div class="modal-title">Question prête à envoyer</div>';
+  html += '<div class="modal-sub">Copie ce message et colle-le dans le chat pour obtenir la réponse.</div>';
+  html += modalCopyBox(ctx.text);
+  return html;
+}
+
+function modalSearchPrepared(ctx) {
+  var html = '<div class="modal-title">Recherche enregistrée</div>';
+  html += '<div class="modal-sub">Déjà copié dans ton presse-papier — colle directement dans le chat. Les annonces déjà supprimées sont listées dedans pour que je ne te les propose jamais à nouveau.</div>';
+  html += modalCopyBox(ctx.text);
+  html += '<div class="paste-box">';
+  html += '<label style="margin-top:0;">Une fois ma réponse reçue : colle ici le bloc JSON que je te donne</label>';
+  html += '<textarea class="list-textarea" id="psr-paste-result" placeholder="Colle ici le bloc ```json que je te donne dans le chat…"></textarea>';
+  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-primary" onclick="PSR.applyNewProposals()">Remplacer les 5 propositions</button></div>';
+  html += '</div>';
+  return html;
+}
+
+function formatCriteriaForPrompt() {
+  var c = state.searchCriteria;
+  var lines = [];
+  lines.push("Zone : " + c.zone + " | CA cible : " + c.caMin + " – " + c.caMax);
+  lines.push("Profil : " + c.profil);
+  lines.push("Les 5 critères obligatoires (tous doivent être cochés) :");
+  c.criteria5.forEach(function(cr, i){ lines.push("  " + (i+1) + ". " + cr); });
+  if (c.criteria6) lines.push("Critère optionnel : " + c.criteria6);
+  lines.push("Points de vigilance disqualifiants (exclure si un seul est présent) :");
+  c.vigilance.forEach(function(v){ lines.push("  - " + v); });
+  lines.push("Objectif : " + c.objectif);
+  return lines.join("\n");
+}
+
+var PROPOSAL_JSON_SCHEMA_HINT =
+  'Réponds avec UNIQUEMENT un bloc ```json contenant un tableau de 5 propositions, ce schéma exact par élément (types respectés, "null" si inconnu) :\n' +
+  '[{\n' +
+  '  "id": "p1", "topPick": false,\n' +
+  '  "name": "...", "sector": "...", "location": "...",\n' +
+  '  "source": "Fusacq | Transentreprise | CRA | ...", "ref": "...", "url": "...",\n' +
+  '  "lastChecked": "JJ/MM/AAAA — annonce active",\n' +
+  '  "ca": "...", "ebitda": "...", "ebitdaIsEstimate": true,\n' +
+  '  "resultat": "...", "prix": "...", "prixDetail": "...", "multiple": "...",\n' +
+  '  "salaireDirigeant": "... ou null si non communiqué",\n' +
+  '  "pitch": "...",\n' +
+  '  "criteria": [\n' +
+  '    {"n":1,"label":"Marché stable/croissant","status":"ok|check|warn","note":"..."},\n' +
+  '    {"n":2,"label":"Revenus récurrents","status":"ok|check|warn","note":"..."},\n' +
+  '    {"n":3,"label":"EBITDA > 15 %","status":"ok|check|warn","note":"..."},\n' +
+  '    {"n":4,"label":"Faible dépendance clients","status":"ok|check|warn","note":"..."},\n' +
+  '    {"n":5,"label":"Avantage concurrentiel","status":"ok|check|warn","note":"..."}\n' +
+  '  ],\n' +
+  '  "vigilance": [ {"label":"...","level":"eleve|modere|faible","note":"..."} ]\n' +
+  '}]';
+
+function buildSearchPrompt(guidance, excludedLines) {
+  var parts = ["Lance la recherche.", "", formatCriteriaForPrompt()];
+  if (guidance) parts.push("", "Instructions complémentaires : " + guidance);
+  if (excludedLines.length) parts.push("", "Ne me repropose jamais ces annonces déjà écartées :", excludedLines.join("\n"));
+  parts.push("", PROPOSAL_JSON_SCHEMA_HINT);
+  return parts.join("\n");
+}
+
+/* ============================= FINANCEMENT & STRESS TEST — moteur de calcul ============================= */
+/* Réplique fidèle des 3 onglets de "Tableau d'analyse et calculateur automatique de valorisation" :
+   Input | FINANCEMENT & CASHFLOW | STRESS TEST — mêmes formules (PMT Excel, EBE retraité, scénarios).
+   Les lignes marquées "AJOUT" plus bas dans le rendu sont des ajouts de Claude, absents du fichier d'origine. */
+
+function parseNumberLoose(str) {
+  if (str === null || str === undefined || str === '') return 0;
+  var s = String(str);
+  var mMatch = s.match(/([\d]+[.,]?\d*)\s*M\s*€/i);
+  if (mMatch) return Math.round(parseFloat(mMatch[1].replace(',','.')) * 1000000);
+  var kMatch = s.match(/([\d]+[.,]?\d*)\s*k\s*€/i);
+  if (kMatch) return Math.round(parseFloat(kMatch[1].replace(',','.')) * 1000);
+  var plainMatch = s.match(/([\d][\d\s]{2,})\s*€/);
+  if (plainMatch) return parseInt(plainMatch[1].replace(/\s/g,''),10) || 0;
+  var anyNum = s.match(/[\d]+[.,]?\d*/);
+  if (anyNum) return Math.round(parseFloat(anyNum[0].replace(',','.'))) || 0;
+  return 0;
+}
+
+function fmtEUR(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return Math.round(n).toLocaleString('fr-FR') + ' €';
+}
+function fmtPct1(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return (Math.round(n*10)/10).toLocaleString('fr-FR') + ' %';
+}
+
+/* PMT Excel-exact : paiement mensuel d'un prêt amortissable (taux annuel en %, durée en années) */
+function pmtMonthly(principal, annualRatePct, years) {
+  principal = principal || 0; years = years || 0;
+  var n = years * 12;
+  if (!principal || !n) return 0;
+  var r = (annualRatePct||0) / 100 / 12;
+  if (Math.abs(r) < 1e-9) return principal / n;
+  return principal * r / (1 - Math.pow(1+r, -n));
+}
+
+function defaultFinancingData(listing) {
+  var prixNum = parseNumberLoose(listing.prix);
+  return {
+    ca: parseNumberLoose(listing.ca),
+    ebeComptable: parseNumberLoose(listing.ebitda),
+    remuActuelle: parseNumberLoose(listing.salaireDirigeant),
+    remuMarche: 0,
+    chargesExcep: 0,
+    dettesExistantes: 0,
+    tresorerie: 0,
+    capex: 0,
+    topClientsPct: 0,
+    croissanceCA: 0,
+    multipleValo: 3,
+    apport: 0,
+    detteBancaire: prixNum,
+    tauxPct: 4.8,
+    dureeAnnees: 7,
+    vendeurMontant: 0,
+    vendeurTauxPct: 0,
+    vendeurDureeAnnees: 3,
+    chocCAPct: 20
+  };
+}
+
+function getFinancingData(listing) {
+  var def = defaultFinancingData(listing);
+  var existing = state.financingData[listing.id];
+  return existing ? Object.assign({}, def, existing) : def;
+}
+
+function computeFinancingModel(fd) {
+  var ebeRetraite = (fd.ebeComptable||0) + ((fd.remuActuelle||0) - (fd.remuMarche||0)) + (fd.chargesExcep||0);
+  var valorisation = ebeRetraite * (fd.multipleValo||0);
+
+  var mensualiteBanque = pmtMonthly(fd.detteBancaire, fd.tauxPct, fd.dureeAnnees);
+  var remboursementBancaireAnnuel = mensualiteBanque * 12;
+  var mensualiteVendeur = pmtMonthly(fd.vendeurMontant, fd.vendeurTauxPct, fd.vendeurDureeAnnees);
+  var remboursementVendeurAnnuel = mensualiteVendeur * 12;
+  var remboursementAnnuel = remboursementBancaireAnnuel + remboursementVendeurAnnuel;
+
+  var cashFlow = ebeRetraite - remboursementAnnuel - (fd.capex||0);
+  var cashReturn = fd.apport ? (cashFlow / fd.apport) : null;
+  var ratioRembEBE = ebeRetraite !== 0 ? (remboursementAnnuel/ebeRetraite) : null;
+
+  var ebeStress1 = ebeRetraite * (1 - (fd.chocCAPct||0)/100);
+  var cfStress1 = ebeStress1 - remboursementAnnuel - (fd.capex||0);
+  var ebeStress2 = ebeRetraite * (1 - (fd.topClientsPct||0)/100);
+  var cfStress2 = ebeStress2 - remboursementAnnuel - (fd.capex||0);
+
+  var flagCashFlowPositif = cashFlow >= 0;
+  var flagRatioOK = ratioRembEBE !== null && ratioRembEBE < 0.70;
+  var flagStressOK = cfStress1 >= 0 && cfStress2 >= 0;
+  var dealInteressant = flagCashFlowPositif && flagRatioOK && flagStressOK;
+
+  var flagClientRisk = (fd.topClientsPct||0) > 30;
+  var flagCapexRisk = ebeRetraite > 0 && (fd.capex||0) > ebeRetraite*0.15;
+
+  var prixNet = valorisation - (fd.dettesExistantes||0) + (fd.tresorerie||0);
+  var totalSources = (fd.apport||0) + (fd.detteBancaire||0) + (fd.vendeurMontant||0);
+  var ecartFinancement = totalSources - valorisation;
+
+  return {
+    ebeRetraite:ebeRetraite, valorisation:valorisation,
+    mensualiteBanque:mensualiteBanque, remboursementBancaireAnnuel:remboursementBancaireAnnuel,
+    mensualiteVendeur:mensualiteVendeur, remboursementVendeurAnnuel:remboursementVendeurAnnuel,
+    remboursementAnnuel:remboursementAnnuel,
+    cashFlow:cashFlow, cashReturn:cashReturn, ratioRembEBE:ratioRembEBE,
+    ebeStress1:ebeStress1, cfStress1:cfStress1, ebeStress2:ebeStress2, cfStress2:cfStress2,
+    flagCashFlowPositif:flagCashFlowPositif, flagRatioOK:flagRatioOK, flagStressOK:flagStressOK, dealInteressant:dealInteressant,
+    flagClientRisk:flagClientRisk, flagCapexRisk:flagCapexRisk,
+    prixNet:prixNet, totalSources:totalSources, ecartFinancement:ecartFinancement
+  };
+}
+
+function computeMultiYearProjection(fd, years) {
+  years = years || 7;
+  var ebeRetraite = (fd.ebeComptable||0) + ((fd.remuActuelle||0) - (fd.remuMarche||0)) + (fd.chargesExcep||0);
+  var pmtBancaireAnnuel = pmtMonthly(fd.detteBancaire, fd.tauxPct, fd.dureeAnnees) * 12;
+  var pmtVendeurAnnuel = pmtMonthly(fd.vendeurMontant, fd.vendeurTauxPct, fd.vendeurDureeAnnees) * 12;
+  var croissance = (fd.croissanceCA||0)/100;
+
+  var rows = [];
+  for (var y = 1; y <= years; y++) {
+    var ebeYear = ebeRetraite * Math.pow(1+croissance, y-1);
+    var rembBanque = y <= (fd.dureeAnnees||0) ? pmtBancaireAnnuel : 0;
+    var rembVendeur = y <= (fd.vendeurDureeAnnees||0) ? pmtVendeurAnnuel : 0;
+    var totalRemb = rembBanque + rembVendeur;
+    var cf = ebeYear - totalRemb - (fd.capex||0);
+    var ratio = ebeYear !== 0 ? totalRemb/ebeYear : null;
+    rows.push({ annee:y, ebe:ebeYear, rembBanque:rembBanque, rembVendeur:rembVendeur, totalRemb:totalRemb, cf:cf, ratio:ratio, ok: cf>=0 && (ratio===null || ratio<0.70) });
+  }
+  return rows;
+}
+
+function finInput(listingId, field, value) {
+  var v = (value===0) ? '0' : (value||'');
+  return '<input type="text" class="fin-input" value="'+esc(v)+'" onchange="PSR.updateFinancingField(\''+listingId+'\',\''+field+'\',this.value)">';
+}
+function finFieldRow(listingId, field, label, value) {
+  return '<tr><td>'+esc(label)+'</td><td>'+finInput(listingId,field,value)+'</td></tr>';
+}
+function finComputedRow(label, value, warn) {
+  return '<tr class="fin-computed'+(warn?' fin-warn':'')+'"><td><b>'+esc(label)+'</b></td><td class="mono"><b>'+esc(value)+'</b></td></tr>';
+}
+
+function renderFinancingDossier(l) {
+  var fd = getFinancingData(l);
+  var m = computeFinancingModel(fd);
+
+  var html = '<div class="dossier fin-dossier">';
+  html += '<div class="dossier-head"><div>';
+  html += '<div class="dossier-ref mono">'+esc(l.source||'Ajout manuel')+(l.ref?(' · Réf. '+esc(l.ref)):'')+'</div>';
+  html += '<div class="dossier-title">'+esc(l.name)+'</div>';
+  html += '</div>';
+  html += '<div class="stamp '+(m.dealInteressant?'':'warn')+'"><span class="stamp-big">'+(m.dealInteressant?'OK':'!')+'</span>'+(m.dealInteressant?'critères remplis':'à ajuster')+'</div>';
+  html += '</div><div class="dossier-body">';
+
+  html += '<div class="fin-note">Valeurs pré-remplies automatiquement quand c\'est possible (CA, EBE, salaire dirigeant si connu) — vérifie et corrige avant de t\'y fier. Le reste (taux, durée, apport…) est à ta main.</div>';
+
+  html += '<div class="form-divider">1. Input — données de la cible</div>';
+  html += '<table class="dd-table fin-table"><tr><th>Variable</th><th>Valeur</th></tr>';
+  html += finFieldRow(l.id,'ca',"Chiffre d'affaires", fd.ca);
+  html += finFieldRow(l.id,'ebeComptable','EBE comptable', fd.ebeComptable);
+  html += finFieldRow(l.id,'remuActuelle','Rémunération dirigeant actuelle', fd.remuActuelle);
+  html += finFieldRow(l.id,'remuMarche','Rémunération de marché', fd.remuMarche);
+  html += finFieldRow(l.id,'chargesExcep','Charges exceptionnelles', fd.chargesExcep);
+  html += finFieldRow(l.id,'dettesExistantes','Dettes existantes', fd.dettesExistantes);
+  html += finFieldRow(l.id,'tresorerie','Trésorerie', fd.tresorerie);
+  html += finFieldRow(l.id,'capex','CAPEX annuel estimé', fd.capex);
+  html += finFieldRow(l.id,'topClientsPct','Top 3 clients (% du CA)', fd.topClientsPct);
+  html += finFieldRow(l.id,'croissanceCA','Croissance CA (%)', fd.croissanceCA);
+  html += finComputedRow('EBE retraité', fmtEUR(m.ebeRetraite));
+  html += '<tr><td>Multiple de valorisation (×2 à ×4 selon activité)</td><td>'+finInput(l.id,'multipleValo',fd.multipleValo)+'</td></tr>';
+  html += finComputedRow('Valorisation', fmtEUR(m.valorisation));
+  html += finComputedRow('AJOUT — Prix net (valorisation − dettes existantes + trésorerie)', fmtEUR(m.prixNet));
+  html += '</table>';
+
+  html += '<div class="form-divider">2. Financement &amp; cashflow</div>';
+  html += '<table class="dd-table fin-table"><tr><th>Variable</th><th>Valeur</th></tr>';
+  html += finFieldRow(l.id,'apport','Apport', fd.apport);
+  html += finFieldRow(l.id,'detteBancaire','Dette bancaire', fd.detteBancaire);
+  html += finFieldRow(l.id,'tauxPct','Taux dette bancaire (%)', fd.tauxPct);
+  html += finFieldRow(l.id,'dureeAnnees','Durée dette bancaire (années)', fd.dureeAnnees);
+  html += finFieldRow(l.id,'vendeurMontant','AJOUT — Crédit vendeur', fd.vendeurMontant);
+  html += finFieldRow(l.id,'vendeurTauxPct','AJOUT — Taux crédit vendeur (%, souvent 0)', fd.vendeurTauxPct);
+  html += finFieldRow(l.id,'vendeurDureeAnnees','AJOUT — Durée crédit vendeur (années)', fd.vendeurDureeAnnees);
+  html += finComputedRow('Remboursement annuel — dette bancaire', fmtEUR(m.remboursementBancaireAnnuel));
+  html += finComputedRow('Remboursement annuel — crédit vendeur', fmtEUR(m.remboursementVendeurAnnuel));
+  html += finComputedRow('Remboursement annuel — total', fmtEUR(m.remboursementAnnuel));
+  html += finComputedRow('Cash-flow post acquisition (EBE retraité − remboursement total − CAPEX)', fmtEUR(m.cashFlow), !m.flagCashFlowPositif);
+  html += finComputedRow('Cash Return (cash-flow / apport)', m.cashReturn===null?'— (apport nul)':fmtPct1(m.cashReturn*100));
+  html += finComputedRow('AJOUT — Remboursement / EBE (cible < 70 %)', m.ratioRembEBE===null?'—':fmtPct1(m.ratioRembEBE*100), !m.flagRatioOK);
+  html += finComputedRow('AJOUT — Sources (apport+dette+crédit vendeur) vs valorisation, écart', fmtEUR(m.ecartFinancement));
+  html += '</table>';
+
+  html += '<div class="form-divider">3. Stress test</div>';
+  html += '<table class="dd-table fin-table"><tr><th>Hypothèse</th><th>EBE choqué</th><th>Cash-flow stressé</th><th>Statut</th></tr>';
+  html += '<tr><td>Choc CA −'+finInput(l.id,'chocCAPct',fd.chocCAPct)+'% (EBE×(1−choc))</td><td class="mono">'+fmtEUR(m.ebeStress1)+'</td><td class="mono">'+fmtEUR(m.cfStress1)+'</td><td>'+(m.cfStress1>=0?'<span class="chip chip-ok">OK</span>':'<span class="chip chip-warn">NÉGATIF</span>')+'</td></tr>';
+  html += '<tr><td>Perte client majeur (EBE × (1 − % top 3 clients))</td><td class="mono">'+fmtEUR(m.ebeStress2)+'</td><td class="mono">'+fmtEUR(m.cfStress2)+'</td><td>'+(m.cfStress2>=0?'<span class="chip chip-ok">OK</span>':'<span class="chip chip-warn">NÉGATIF</span>')+'</td></tr>';
+  html += '</table>';
+
+  html += '<div class="vigilance-box" style="margin-top:4px;"><div class="v-title">AJOUT — Red flags automatiques</div>';
+  html += '<div class="v-item">Dépendance client &gt; 30 % : '+(m.flagClientRisk?'<b>OUI — '+fmtPct1(fd.topClientsPct)+'</b>':'non, '+fmtPct1(fd.topClientsPct))+'</div>';
+  html += '<div class="v-item">CAPEX élevé (&gt; 15 % de l\'EBE retraité) : '+(m.flagCapexRisk?'<b>OUI</b>':'non')+'</div>';
+  html += '<div class="v-item">EBE "gonflé" artificiellement : ne peut pas être détecté automatiquement — vérifier en due diligence la nature réelle des "charges exceptionnelles" retraitées.</div>';
+  html += '</div>';
+
+  var proj = computeMultiYearProjection(fd, 7);
+  html += '<div class="form-divider">4. AJOUT — Projection pluriannuelle (7 ans, croissance CA appliquée à l\'EBE)</div>';
+  html += '<div class="fin-note">Le crédit vendeur et la dette bancaire ont des durées différentes : le remboursement total baisse dès que l\'une des deux est soldée. Hypothèse simplificatrice : l\'EBE croît au même rythme que le CA ; le CAPEX est maintenu constant.</div>';
+  html += '<table class="dd-table fin-table"><tr><th>Année</th><th>EBE projeté</th><th>Remb. bancaire</th><th>Remb. vendeur</th><th>Cash-flow net</th><th>Remb./EBE</th><th>Statut</th></tr>';
+  proj.forEach(function(r){
+    html += '<tr><td>An '+r.annee+'</td><td class="mono">'+fmtEUR(r.ebe)+'</td><td class="mono">'+fmtEUR(r.rembBanque)+'</td><td class="mono">'+fmtEUR(r.rembVendeur)+'</td><td class="mono">'+fmtEUR(r.cf)+'</td><td class="mono">'+(r.ratio===null?'—':fmtPct1(r.ratio*100))+'</td><td>'+(r.ok?'<span class="chip chip-ok">OK</span>':'<span class="chip chip-warn">ATTENTION</span>')+'</td></tr>';
+  });
+  html += '</table>';
+  var vendeurSoldeAnnee = (fd.vendeurMontant||0) > 0 ? (fd.vendeurDureeAnnees||0) : null;
+  if (vendeurSoldeAnnee && vendeurSoldeAnnee < 7) {
+    var avant = proj[vendeurSoldeAnnee-1], apres = proj[vendeurSoldeAnnee];
+    if (avant && apres) {
+      html += '<div class="fin-note">Crédit vendeur soldé fin d\'année '+vendeurSoldeAnnee+' — le cash-flow disponible passe de '+fmtEUR(avant.cf)+' à '+fmtEUR(apres.cf)+' l\'année suivante (avant effet croissance).</div>';
+    }
+  }
+  var premiereAnneeAttention = proj.find(function(r){return !r.ok;});
+  if (premiereAnneeAttention) {
+    html += '<div class="fin-note" style="color:var(--vermillion);">Première année sous vigilance : année '+premiereAnneeAttention.annee+' (ratio remboursement/EBE ≥ 70 % ou cash-flow négatif).</div>';
+  }
+
+  html += '<div class="dossier-actions"><button class="btn-danger btn-sm" onclick="PSR.toggleFinancingSelection(\''+l.id+'\')">Retirer du stress test</button></div>';
+  html += '</div></div>';
+  return html;
+}
+
+function viewFinancing() {
+  var html = '';
+  html += '<div class="eyebrow">Étape 5</div>';
+  html += '<h2 class="section-title">Financement et stress test</h2>';
+  html += '<p class="section-sub">Réplique de ton fichier "Tableau d\'analyse et calculateur automatique de valorisation" (3 onglets : Input, Financement &amp; Cashflow, Stress test) — une instance par annonce ajoutée. Modèle de screening simplifié ; à valider avec ton banquier avant signature.</p>';
+
+  html += '<div class="two-col" style="margin-bottom:18px;">';
+  html += '<div class="vigilance-box positive"><div class="v-title">Deal intéressant si</div>';
+  html += '<div class="v-item">Cash-flow positif dès année 1</div>';
+  html += '<div class="v-item">Remboursement &lt; 70 % de l\'EBE</div>';
+  html += '<div class="v-item">Stress test OK (toujours positif)</div></div>';
+  html += '<div class="vigilance-box"><div class="v-title">Red flags</div>';
+  html += '<div class="v-item">Cash-flow négatif</div>';
+  html += '<div class="v-item">Dépendance client &gt; 30 %</div>';
+  html += '<div class="v-item">CAPEX élevé non anticipé</div>';
+  html += '<div class="v-item">EBE "gonflé" artificiellement</div></div>';
+  html += '</div>';
+
+  var selected = state.financingSelection.map(function(id){ return findSaved(id); }).filter(Boolean);
+  if (selected.length === 0) {
+    html += '<div class="empty-state"><span class="serif">Aucune opportunité ici</span>Va dans "Annonces sauvegardées" et clique sur "Ajouter au stress test" pour une annonce.</div>';
+  } else {
+    selected.forEach(function(l){ html += renderFinancingDossier(l); });
+  }
+  return html;
+}
+
+/* ============================= ACTIONS ============================= */
+
+window.PSR = {
+
+  authSignIn: function() {
+    var email = document.getElementById('auth-email').value.trim();
+    var password = document.getElementById('auth-password').value;
+    setAuthError('');
+    if (!email || !password) { setAuthError('Email et mot de passe requis.'); return; }
+    setAuthStatus('Connexion en cours…');
+    sb.auth.signInWithPassword({ email: email, password: password }).then(function(res){
+      if (res.error) { setAuthError(res.error.message); setAuthStatus(''); }
+    });
+  },
+  authSignUp: function() {
+    var email = document.getElementById('auth-email').value.trim();
+    var password = document.getElementById('auth-password').value;
+    setAuthError('');
+    if (!email || !password) { setAuthError('Email et mot de passe requis.'); return; }
+    if (password.length < 6) { setAuthError('Le mot de passe doit faire au moins 6 caractères.'); return; }
+    setAuthStatus('Création du compte…');
+    sb.auth.signUp({ email: email, password: password }).then(function(res){
+      if (res.error) { setAuthError(res.error.message); setAuthStatus(''); return; }
+      if (res.data && res.data.user && !res.data.session) {
+        setAuthStatus('Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.');
+      }
+    });
+  },
+  authSignOut: function() { sb.auth.signOut(); },
+
+  setTab: function(tab) { ui.tab = tab; ui.groupFilter = null; render(); },
+  setGroupFilter: function(gid) { ui.groupFilter = gid; render(); },
+  setStatusFilter: function(sid) { ui.statusFilter = sid; render(); },
+  updateStatus: function(id, newStatus) {
+    var l = findSaved(id);
+    if (!l) return;
+    l.status = newStatus;
+    persist();
+    render();
+    showToast('Statut : ' + statusLabel(newStatus));
+  },
+  selectDD: function(id) { ui.ddSelected = id; render(); },
+  gotoDD: function(sourceId) { ui.tab = 'dd'; ui.groupFilter = null; ui.ddSelected = sourceId; render(); },
+
+  openModal: function(name, ctx) { ui.modal = name; ui.modalCtx = ctx; render(); },
+  switchModal: function(name) { ui.modal = name; render(); },
+  closeModal: function() { ui.modal = null; ui.modalCtx = null; render(); },
+  closeModalIfBackdrop: function(ev) { if (ev.target.classList.contains('modal-overlay')) PSR.closeModal(); },
+
+  copyText: function() {
+    var ta = document.getElementById('psr-copy-text');
+    ta.select();
+    try {
+      navigator.clipboard.writeText(ta.value).then(function(){ showToast('Copié — colle-le dans le chat.'); }).catch(function(){ showToast('Sélection prête — Ctrl+C / Cmd+C pour copier.'); });
+    } catch(e) { showToast('Sélection prête — Ctrl+C / Cmd+C pour copier.'); }
+  },
+
+  launchSearch: function() {
+    var guidance = document.getElementById('psr-guidance').value.trim();
+    var req = { date: new Date().toISOString(), guidance: guidance };
+    state.searchRequests.push(req);
+    persist();
+    var excluded = state.excludedListings.map(function(e){ return '- ' + e.name + ' (raison : ' + e.reason + ')'; });
+    var text = buildSearchPrompt(guidance, excluded);
+    try { navigator.clipboard.writeText(text); } catch(e) {}
+    ui.modal = 'searchPrepared'; ui.modalCtx = { text: text };
+    render();
+  },
+
+  submitEditCriteria: function() {
+    var c = {
+      zone: document.getElementById('ec-zone').value.trim(),
+      caMin: document.getElementById('ec-caMin').value.trim(),
+      caMax: document.getElementById('ec-caMax').value.trim(),
+      profil: document.getElementById('ec-profil').value.trim(),
+      criteria5: document.getElementById('ec-criteria5').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
+      criteria6: document.getElementById('ec-criteria6').value.trim(),
+      vigilance: document.getElementById('ec-vigilance').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),
+      objectif: document.getElementById('ec-objectif').value.trim(),
+      financement: document.getElementById('ec-financement').value.trim(),
+      pilotage: document.getElementById('ec-pilotage').value.trim(),
+      developpement: document.getElementById('ec-developpement').value.trim()
+    };
+    state.searchCriteria = c;
+    persist();
+    ui.modal = null;
+    showToast('Caractéristiques de recherche enregistrées.');
+    render();
+  },
+
+  resetCriteria: function() {
+    state.searchCriteria = cloneDefaultCriteria();
+    persist();
+    showToast('Caractéristiques réinitialisées aux valeurs d\'origine.');
+    render();
+  },
+
+  applyNewProposals: function() {
+    var raw = document.getElementById('psr-paste-result').value.trim();
+    if (!raw) { showToast('Colle d\'abord le bloc JSON que je t\'ai donné dans le chat.'); return; }
+    var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+    var parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch(e) { showToast('JSON invalide — vérifie que tu as collé le bloc en entier, tel quel.'); return; }
+    if (!Array.isArray(parsed) || parsed.length === 0) { showToast('Le JSON doit être un tableau de propositions.'); return; }
+    var valid = parsed.every(function(p){ return p && p.id && p.name && Array.isArray(p.criteria); });
+    if (!valid) { showToast('Chaque proposition doit au moins avoir id, name et criteria.'); return; }
+    state.currentProposals = parsed;
+    state.currentProposalsUpdatedAt = new Date().toISOString();
+    persist();
+    ui.modal = null;
+    ui.tab = 'recherche';
+    showToast(parsed.length + ' nouvelle(s) proposition(s) chargée(s).');
+    render();
+  },
+
+  saveProposal: function(pid) {
+    var p = findProposal(pid);
+    if (!p) return;
+    var already = state.savedListings.some(function(l){return l.sourceId===pid;});
+    if (already) { showToast('Déjà sauvegardée.'); return; }
+    state.savedListings.push({
+      id: uid('sl'), sourceId: p.id, manual: false,
+      name: p.name, sector: p.sector, location: p.location, source: p.source, ref: p.ref, url: p.url,
+      ca: p.ca, ebitda: p.ebitda, resultat: p.resultat, prix: p.prix, multiple: p.multiple, pitch: p.pitch,
+      salaireDirigeant: p.salaireDirigeant || '',
+      groups: [], status: 'a_qualifier', savedAt: new Date().toISOString()
+    });
+    persist();
+    showToast('Annonce sauvegardée.');
+    render();
+  },
+
+  submitAddListing: function() {
+    var name = document.getElementById('af-name').value.trim();
+    if (!name) { showToast('Le nom de l\'entreprise est obligatoire.'); return; }
+    state.savedListings.push({
+      id: uid('sl'), sourceId: uid('manual'), manual: true,
+      name: name,
+      sector: document.getElementById('af-sector').value.trim(),
+      location: document.getElementById('af-location').value.trim(),
+      source: document.getElementById('af-source').value.trim(),
+      ref: document.getElementById('af-ref').value.trim(),
+      url: document.getElementById('af-url').value.trim(),
+      ca: document.getElementById('af-ca').value.trim(),
+      ebitda: document.getElementById('af-ebitda').value.trim(),
+      resultat: document.getElementById('af-resultat').value.trim(),
+      prix: document.getElementById('af-prix').value.trim(),
+      salaireDirigeant: document.getElementById('af-salaire').value.trim(),
+      pitch: document.getElementById('af-pitch').value.trim(),
+      groups: [], status: 'a_qualifier', savedAt: new Date().toISOString()
+    });
+    persist();
+    ui.modal = null;
+    showToast('Annonce ajoutée.');
+    ui.tab = 'saved';
+    render();
+  },
+
+  submitAddGroup: function() {
+    var name = document.getElementById('ag-name').value.trim();
+    if (!name) { showToast('Donne un nom au groupe.'); return; }
+    state.groups.push({ id: uid('g'), name: name });
+    persist();
+    ui.modal = null;
+    showToast('Groupe créé.');
+    render();
+  },
+
+  submitAssignGroups: function(listingId) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    var checked = Array.prototype.slice.call(document.querySelectorAll('#psr-modal-root input[data-group]:checked'));
+    l.groups = checked.map(function(el){ return el.getAttribute('data-group'); });
+    persist();
+    ui.modal = null;
+    render();
+  },
+
+  openDeleteModal: function(type, id) { ui.modal = 'deleteReason'; ui.modalCtx = { type: type, id: id }; render(); },
+
+  confirmDelete: function() {
+    var ctx = ui.modalCtx;
+    var reasonRadio = document.querySelector('#psr-modal-root input[name="del-reason"]:checked');
+    var reason = reasonRadio ? reasonRadio.value : 'Autre';
+    var detail = document.getElementById('del-detail').value.trim();
+    var fullReason = detail ? (reason + ' — ' + detail) : reason;
+    var name, matchKey;
+    if (ctx.type === 'proposal') {
+      var p = findProposal(ctx.id);
+      name = p.name; matchKey = p.ref;
+    } else {
+      var l = findSaved(ctx.id);
+      name = l.name; matchKey = l.ref || l.sourceId;
+      state.savedListings = state.savedListings.filter(function(x){ return x.id !== ctx.id; });
+    }
+    state.excludedListings.push({ id: uid('ex'), name: name, reason: fullReason, matchKey: matchKey, date: new Date().toISOString() });
+    persist();
+    ui.modal = null;
+    showToast('Supprimée — elle ne te sera plus jamais proposée.');
+    render();
+  },
+
+  toggleCompareSelection: function(id) {
+    var idx = state.comparisonSelection.indexOf(id);
+    if (idx === -1) state.comparisonSelection.push(id); else state.comparisonSelection.splice(idx,1);
+    persist();
+    render();
+  },
+
+  toggleFinancingSelection: function(id) {
+    var idx = state.financingSelection.indexOf(id);
+    if (idx === -1) { state.financingSelection.push(id); showToast('Ajouté à l\'onglet Financement et stress test.'); }
+    else { state.financingSelection.splice(idx,1); }
+    persist();
+    render();
+  },
+
+  updateFinancingField: function(listingId, field, rawValue) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    var fd = state.financingData[listingId] || getFinancingData(l);
+    var n = parseFloat(String(rawValue).replace(',','.').replace(/[^\d.\-]/g,''));
+    fd[field] = isNaN(n) ? 0 : n;
+    state.financingData[listingId] = fd;
+    persist();
+    render();
+  },
+
+  updateNotes: function(listingId, value) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    l.notes = value;
+    persist();
+    render();
+  },
+
+  applyAnswer: function(key, idx) {
+    var el = document.getElementById('psr-answer-'+key+'-'+idx);
+    if (!el) return;
+    var text = el.value.trim();
+    if (!text) { showToast('Colle d\'abord ma réponse avant d\'enregistrer.'); return; }
+    if (state.questionsLog[key] && state.questionsLog[key][idx]) {
+      state.questionsLog[key][idx].a = text;
+      persist();
+      render();
+      showToast('Réponse enregistrée.');
+    }
+  },
+
+  requestDD: function(listingId) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    var text = buildDDRequestPrompt(l);
+    try { navigator.clipboard.writeText(text); } catch(e) {}
+    ui.modal = 'requestDD'; ui.modalCtx = listingId;
+    render();
+  },
+
+  applyCustomDD: function(listingId) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    var el = document.getElementById('psr-dd-paste-'+listingId);
+    if (!el) return;
+    var raw = el.value.trim();
+    if (!raw) { showToast('Colle d\'abord le bloc JSON que je t\'ai donné dans le chat.'); return; }
+    var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+    var parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch(e) { showToast('JSON invalide — vérifie que tu as collé le bloc en entier, tel quel.'); return; }
+    if (!parsed || !Array.isArray(parsed.sections) || !parsed.verdict) {
+      showToast('Le JSON doit contenir au moins "verdict" et "sections".');
+      return;
+    }
+    state.customDD[l.sourceId] = parsed;
+    persist();
+    ui.modal = null;
+    ui.tab = 'dd';
+    ui.ddSelected = l.sourceId;
+    showToast('Due diligence installée.');
+    render();
+  },
+
+  prepareQuestion: function(key, context) {
+    var ta = document.getElementById('psr-question-'+key);
+    var q = ta.value.trim();
+    if (!q) { showToast('Écris une question avant de continuer.'); return; }
+    if (!state.questionsLog[key]) state.questionsLog[key] = [];
+    state.questionsLog[key].push({ q: q, a: null, date: new Date().toISOString() });
+    persist();
+
+    var contextText = '';
+    if (context === 'dd') {
+      var dd = getDD(key);
+      var prop = findProposal(key);
+      contextText = "Dossier concerné : " + (prop?prop.name:key) + " (due diligence du " + (dd?dd.dateAnalyse:'—') + ").";
+    } else if (context === 'compare') {
+      var ids = key.replace('compare-','').split('-');
+      var names = state.savedListings.filter(function(l){return ids.indexOf(l.id)!==-1;}).map(function(l){return l.name;});
+      contextText = "Comparaison en cours entre : " + names.join(' / ') + ".";
+    }
+    var text = contextText + "\n\nMa question : " + q + "\n\n(Réponds directement dans le chat ; je collerai ta réponse dans la case dédiée sous cette question.)";
+    try { navigator.clipboard.writeText(text); } catch(e) {}
+    ui.modal = 'questionPrepared'; ui.modalCtx = { text: text };
+    render();
+  }
+};
+
+loadState();
+
+})();
+</script>
+</body>
+</html>
