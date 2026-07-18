@@ -1040,6 +1040,7 @@ function viewSaved() {
 
   html += '<div class="launch-row" style="margin-bottom:18px;">';
   html += '<button class="btn-primary btn-sm" onclick="PSR.openModal(\'addListing\')">+ Ajouter une annonce manuellement</button>';
+  html += '<button class="btn-primary btn-sm" onclick="PSR.openImportModal()">🤖 Importer via URL ou PDF</button>';
   html += '<button class="btn-outline btn-sm" onclick="PSR.openModal(\'addGroup\')">+ Créer un groupe</button>';
   html += '<button class="btn-outline btn-sm" onclick="PSR.openModal(\'checkExpired\')">Analyser les annonces supprimées</button>';
   html += '</div>';
@@ -1407,7 +1408,7 @@ function viewCompare() {
 
 /* ============================= MODALS ============================= */
 
-var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true };
+var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true, importListing: true };
 
 function renderModal() {
   var root = document.getElementById('psr-modal-root');
@@ -1423,6 +1424,7 @@ function renderModal() {
   else if (ui.modal === 'checkExpired') html += modalCheckExpired();
   else if (ui.modal === 'requestDD') html += modalRequestDD(ui.modalCtx);
   else if (ui.modal === 'deepenDD') html += modalDeepenDD(ui.modalCtx);
+  else if (ui.modal === 'importListing') html += modalImportListing();
   else if (ui.modal === 'questionPrepared') html += modalQuestionPrepared(ui.modalCtx);
   else if (ui.modal === 'searchPrepared') html += modalSearchPrepared(ui.modalCtx);
   else if (ui.modal === 'editCriteria') html += modalEditCriteria();
@@ -1470,6 +1472,50 @@ function modalCopyBox(text) {
   return '<textarea class="readonly-copy" id="psr-copy-text" readonly>'+esc(text)+'</textarea>' +
     '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Fermer</button>' +
     '<button class="btn-primary" onclick="PSR.copyText()">Copier</button></div>';
+}
+
+function modalImportListing() {
+  var ctx = ui.modalCtx || {};
+  var html = '<div class="modal-title">Importer une annonce (URL ou PDF)</div>';
+
+  if (!ctx.extracted) {
+    html += '<div class="modal-sub">Colle l\'URL d\'une annonce, ou choisis un PDF (fiche descriptive, teaser reçu par email). L\'extraction utilise ta clé API Anthropic configurée sur Supabase.</div>';
+    html += '<label>URL de l\'annonce</label><input type="text" id="import-url" placeholder="https://...">';
+    html += '<div class="modal-actions" style="margin-bottom:6px;"><button class="btn-primary" onclick="PSR.runImportFromUrl()">Importer depuis cette URL</button></div>';
+    html += '<div class="form-divider">Ou</div>';
+    html += '<label>Fichier PDF</label><input type="file" id="import-pdf" accept="application/pdf">';
+    html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-primary" onclick="PSR.runImportFromPdf()">Importer ce PDF</button></div>';
+    html += '<div id="import-status" class="fin-note" style="margin-top:10px;"></div>';
+  } else {
+    var e = ctx.extracted;
+    html += '<div class="modal-sub">Vérifie et corrige avant d\'enregistrer — l\'extraction automatique peut manquer des informations ou se tromper.</div>';
+    html += '<label>Nom de l\'entreprise *</label><input type="text" id="imp-name" value="'+esc(e.name||'')+'">';
+    html += '<label>Secteur</label><input type="text" id="imp-sector" value="'+esc(e.sector||'')+'">';
+    html += '<div class="two-col"><div><label>Localisation</label><input type="text" id="imp-location" value="'+esc(e.location||'')+'"></div><div><label>Source</label><input type="text" id="imp-source" value="'+esc(e.source||'')+'"></div></div>';
+    html += '<div class="two-col"><div><label>Référence</label><input type="text" id="imp-ref" value="'+esc(e.ref||'')+'"></div><div><label>URL</label><input type="text" id="imp-url" value="'+esc(e.url||'')+'"></div></div>';
+    html += '<div class="two-col"><div><label>CA</label><input type="text" id="imp-ca" value="'+esc(e.ca||'')+'"></div><div><label>EBITDA</label><input type="text" id="imp-ebitda" value="'+esc(e.ebitda||'')+'"></div></div>';
+    html += '<div class="two-col"><div><label>Résultat net</label><input type="text" id="imp-resultat" value="'+esc(e.resultat||'')+'"></div><div><label>Prix indicatif</label><input type="text" id="imp-prix" value="'+esc(e.prix||'')+'"></div></div>';
+    html += '<label>Salaire du dirigeant (si connu)</label><input type="text" id="imp-salaire" value="'+esc(e.salaireDirigeant||'')+'">';
+    html += '<label>Notes / pitch</label><textarea id="imp-pitch">'+esc(e.pitch||'')+'</textarea>';
+    html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.resetImportModal()">Recommencer</button><button class="btn-primary" onclick="PSR.saveImportedListing()">Enregistrer cette annonce</button></div>';
+  }
+  return html;
+}
+
+function handleImportResult(res, sourceUrl, pdfName) {
+  var statusEl = document.getElementById('import-status');
+  if (res.error) { if (statusEl) statusEl.textContent = 'Erreur : ' + (res.error.message || res.error); return; }
+  if (res.data && res.data.error) { if (statusEl) statusEl.textContent = 'Erreur : ' + res.data.error; return; }
+  var raw = res.data && res.data.text;
+  var cleaned = (raw||'').replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  var parsed;
+  try { parsed = JSON.parse(cleaned); }
+  catch(e) { if (statusEl) statusEl.textContent = 'Réponse non exploitable — réessaie.'; return; }
+  Object.keys(parsed).forEach(function(k){ if (parsed[k] === 'Non trouvé') parsed[k] = ''; });
+  if (sourceUrl && !parsed.url) parsed.url = sourceUrl;
+  if (pdfName && !parsed.source) parsed.source = 'PDF importé (' + pdfName + ')';
+  ui.modalCtx = { extracted: parsed };
+  render();
 }
 
 function modalAddListing() {
@@ -2128,6 +2174,63 @@ window.PSR = {
     persist();
     ui.modal = null;
     showToast('Annonce ajoutée.');
+    ui.tab = 'saved';
+    render();
+  },
+
+  openImportModal: function() { ui.modal = 'importListing'; ui.modalCtx = {}; render(); },
+  resetImportModal: function() { ui.modalCtx = {}; render(); },
+
+  runImportFromUrl: function() {
+    var url = document.getElementById('import-url').value.trim();
+    var statusEl = document.getElementById('import-status');
+    if (!url) { if (statusEl) statusEl.textContent = 'Indique une URL.'; return; }
+    if (statusEl) statusEl.textContent = 'Import en cours (peut prendre 10-20 secondes)…';
+    sb.functions.invoke('ai-agent', { body: { action: 'import', url: url, agentMemory: state.agentMemory || '' } })
+      .then(function(res){ handleImportResult(res, url, null); })
+      .catch(function(err){ var el = document.getElementById('import-status'); if (el) el.textContent = 'Erreur : ' + err.message; });
+  },
+
+  runImportFromPdf: function() {
+    var fileInput = document.getElementById('import-pdf');
+    var file = fileInput.files[0];
+    var statusEl = document.getElementById('import-status');
+    if (!file) { if (statusEl) statusEl.textContent = 'Choisis un fichier PDF.'; return; }
+    if (file.size > 15*1024*1024) { if (statusEl) statusEl.textContent = 'PDF trop volumineux (max ~15 Mo).'; return; }
+    if (statusEl) statusEl.textContent = 'Lecture du PDF puis import (peut prendre 10-20 secondes)…';
+    var reader = new FileReader();
+    reader.onload = function() {
+      var base64 = String(reader.result).split(',')[1];
+      sb.functions.invoke('ai-agent', { body: { action: 'import', pdfBase64: base64, agentMemory: state.agentMemory || '' } })
+        .then(function(res){ handleImportResult(res, null, file.name); })
+        .catch(function(err){ var el = document.getElementById('import-status'); if (el) el.textContent = 'Erreur : ' + err.message; });
+    };
+    reader.onerror = function() { if (statusEl) statusEl.textContent = 'Erreur de lecture du fichier.'; };
+    reader.readAsDataURL(file);
+  },
+
+  saveImportedListing: function() {
+    var name = document.getElementById('imp-name').value.trim();
+    if (!name) { showToast('Le nom de l\'entreprise est requis.'); return; }
+    state.savedListings.push({
+      id: uid('sl'), sourceId: uid('manual'), manual: true,
+      name: name,
+      sector: document.getElementById('imp-sector').value.trim(),
+      location: document.getElementById('imp-location').value.trim(),
+      source: document.getElementById('imp-source').value.trim(),
+      ref: document.getElementById('imp-ref').value.trim(),
+      url: document.getElementById('imp-url').value.trim(),
+      ca: document.getElementById('imp-ca').value.trim(),
+      ebitda: document.getElementById('imp-ebitda').value.trim(),
+      resultat: document.getElementById('imp-resultat').value.trim(),
+      prix: document.getElementById('imp-prix').value.trim(),
+      salaireDirigeant: document.getElementById('imp-salaire').value.trim(),
+      pitch: document.getElementById('imp-pitch').value.trim(),
+      groups: [], status: 'a_qualifier', savedAt: new Date().toISOString()
+    });
+    persist();
+    ui.modal = null;
+    showToast('Annonce importée et enregistrée.');
     ui.tab = 'saved';
     render();
   },
