@@ -198,6 +198,7 @@
 #pme-scout-root .form-divider:first-child { border-top:none; margin-top:0; padding-top:0; }
 #pme-scout-root .modal-box textarea.list-textarea { min-height:92px; font-size:12.5px; }
 #pme-scout-root .paste-box { border:1px dashed var(--brass); border-radius:6px; padding:12px; margin-top:16px; background: var(--amber-bg); }
+#pme-scout-root .agent-box { border:1px solid var(--forest); border-radius:6px; padding:14px; background: var(--forest-bg); }
 #pme-scout-root .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper-light); padding: 11px 20px; border-radius: 6px; font-size: 13px; z-index: 200; box-shadow: 0 6px 20px rgba(0,0,0,0.3); max-width: 90vw; }
 
 /* GRID for group form */
@@ -759,7 +760,8 @@ function freshDefaultState() {
     searchCriteria: cloneDefaultCriteria(),
     financingSelection: [],
     financingData: {},
-    customDD: {}
+    customDD: {},
+    ddAddenda: {}
   };
 }
 var state = freshDefaultState();
@@ -870,6 +872,17 @@ function renderToast() {
 function findSaved(id) { return state.savedListings.find(function(l){ return l.id === id; }); }
 function findProposal(id) { return state.currentProposals.find(function(p){ return p.id === id; }); }
 function getDD(sourceId) { return DUE_DILIGENCE[sourceId] || state.customDD[sourceId]; }
+function getEffectiveDD(sourceId) {
+  var base = getDD(sourceId);
+  if (!base) return null;
+  var add = state.ddAddenda[sourceId];
+  return {
+    verdict: (add && add.verdictOverride) || base.verdict,
+    verdictTone: (add && add.verdictToneOverride) || base.verdictTone,
+    dateAnalyse: base.dateAnalyse,
+    sections: (base.sections || []).concat(add && add.sections ? add.sections : [])
+  };
+}
 function allExcludedMatchKeys() {
   return state.excludedListings.map(function(e){ return e.matchKey; });
 }
@@ -1153,7 +1166,7 @@ function levelClass(lvl) {
 }
 
 function renderDDDoc(sourceId) {
-  var dd = getDD(sourceId);
+  var dd = getEffectiveDD(sourceId);
   var proposal = findProposal(sourceId);
   var saved = state.savedListings.find(function(l){return l.sourceId===sourceId;});
   var name = proposal ? proposal.name : (saved ? saved.name : sourceId);
@@ -1198,7 +1211,61 @@ function renderDDDoc(sourceId) {
     html += '</div>';
   });
 
+  html += '<div class="dossier-actions" style="margin-top:8px;"><button class="btn-outline btn-sm" onclick="PSR.requestDeepenDD(\''+sourceId+'\')">Approfondir la Due Diligence</button></div>';
   html += renderQABox(sourceId, 'dd');
+  html += '</div>';
+  return html;
+}
+
+function summarizeDDForDeepen(dd) {
+  var lines = [];
+  (dd.sections||[]).forEach(function(s){
+    var line = "- " + s.h;
+    if (s.verdictLine) line += " (" + s.verdictLine + ")";
+    lines.push(line);
+  });
+  return lines.join("\n");
+}
+
+var DEEPEN_JSON_SCHEMA_HINT =
+  'Réponds avec UNIQUEMENT un bloc ```json contenant un objet unique, ce schéma exact :\n' +
+  '{\n' +
+  '  "updatedVerdict": "... uniquement si le verdict global doit changer, sinon null",\n' +
+  '  "updatedVerdictTone": "ok|attention|ko — uniquement si changement, sinon null",\n' +
+  '  "newSections": [\n' +
+  '    {"h": "8. Approfondissement — JJ mois AAAA", "sub": [{"h4":"...", "paras":["...","..."]}]}\n' +
+  '  ]\n' +
+  '  // newSections peut contenir plusieurs éléments, mêmes formats que les sections existantes :\n' +
+  '  // table (tableau clé/valeur), criteriaTable+verdictLine, vigilanceTable, sub (h4+paras/list), verdictText\n' +
+  '}';
+
+function buildDeepenPrompt(sourceId) {
+  var dd = getEffectiveDD(sourceId);
+  var prop = findProposal(sourceId);
+  var saved = state.savedListings.find(function(l){return l.sourceId===sourceId;});
+  var name = prop ? prop.name : (saved ? saved.name : sourceId);
+  return [
+    "Approfondis la due diligence de ce dossier : " + name,
+    "",
+    "Verdict actuel : " + (dd ? dd.verdict : '—'),
+    "Ce qui a déjà été couvert (ne répète pas, concentre-toi sur ce qui manque ou reste incertain) :",
+    dd ? summarizeDDForDeepen(dd) : '(aucune section existante)',
+    "",
+    "Utilise autant de recherches web que nécessaire pour aller plus loin que la première analyse.",
+    "",
+    DEEPEN_JSON_SCHEMA_HINT
+  ].join("\n");
+}
+
+function modalDeepenDD(sourceId) {
+  var text = buildDeepenPrompt(sourceId);
+  var html = '<div class="modal-title">Approfondir la Due Diligence</div>';
+  html += '<div class="modal-sub">Déjà copié dans ton presse-papier — colle dans le chat. Je vais plus loin que la première analyse (recherches supplémentaires, points restés incertains) et je te redonne un bloc JSON à coller ci-dessous pour l\'ajouter à cette DD, sans rien écraser de ce qui existe déjà.</div>';
+  html += modalCopyBox(text);
+  html += '<div class="paste-box">';
+  html += '<label style="margin-top:0;">Une fois ma réponse reçue : colle ici le bloc JSON</label>';
+  html += '<textarea class="list-textarea" id="psr-deepen-paste-'+sourceId+'" placeholder="Colle ici le bloc ```json que je te donne dans le chat…"></textarea>';
+  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-primary" onclick="PSR.applyDeepenDD(\''+sourceId+'\')">Ajouter cet approfondissement à la DD</button></div>';
   html += '</div>';
   return html;
 }
@@ -1220,9 +1287,12 @@ function renderQABox(key, context) {
       if (qa.a) {
         html += '<div class="qa-a">'+esc(qa.a)+'</div>';
       } else {
-        html += '<div class="qa-pending">En attente — colle ma réponse ci-dessous une fois reçue dans le chat.</div>';
+        html += '<div class="qa-pending">En attente.</div>';
+        html += '<button class="btn-primary btn-sm" onclick="PSR.answerQuestionAutomatically(\''+esc(key)+'\','+idx+')">🤖 Répondre automatiquement</button>';
+        html += '<div id="psr-auto-status-q-'+esc(key)+'-'+idx+'" class="fin-note"></div>';
+        html += '<div style="margin-top:8px;font-size:11px;color:var(--slate);">Ou colle ma réponse manuellement une fois reçue dans le chat :</div>';
         html += '<textarea class="list-textarea" id="psr-answer-'+esc(key)+'-'+idx+'" style="min-height:44px;" placeholder="Colle ma réponse ici…"></textarea>';
-        html += '<div style="margin-top:4px;"><button class="btn-primary btn-sm" onclick="PSR.applyAnswer(\''+esc(key)+'\','+idx+')">Enregistrer la réponse</button></div>';
+        html += '<div style="margin-top:4px;"><button class="btn-outline btn-sm" onclick="PSR.applyAnswer(\''+esc(key)+'\','+idx+')">Enregistrer la réponse (manuel)</button></div>';
       }
       html += '</div>';
     });
@@ -1279,7 +1349,7 @@ function viewCompare() {
       return high.length ? high.map(function(v){return v.label;}).join(' · ') : p.vigilance[0].label;
     }},
     {label:"Verdict DD", get:function(l){
-      var dd = getDD(l.sourceId);
+      var dd = getEffectiveDD(l.sourceId);
       return dd ? dd.verdict : 'Non générée';
     }},
     {label:"AJOUT — Financement : statut", get:function(l){
@@ -1298,7 +1368,7 @@ function viewCompare() {
     }},
     {label:"AJOUT — Score global", get:function(l){
       var p = findProposal(l.sourceId);
-      var dd = getDD(l.sourceId);
+      var dd = getEffectiveDD(l.sourceId);
       var inFin = state.financingSelection.indexOf(l.id) !== -1;
       var parts = [];
       var allGood = true;
@@ -1336,7 +1406,7 @@ function viewCompare() {
 
 /* ============================= MODALS ============================= */
 
-var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true };
+var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true };
 
 function renderModal() {
   var root = document.getElementById('psr-modal-root');
@@ -1351,6 +1421,7 @@ function renderModal() {
   else if (ui.modal === 'deleteReason') html += modalDeleteReason(ui.modalCtx);
   else if (ui.modal === 'checkExpired') html += modalCheckExpired();
   else if (ui.modal === 'requestDD') html += modalRequestDD(ui.modalCtx);
+  else if (ui.modal === 'deepenDD') html += modalDeepenDD(ui.modalCtx);
   else if (ui.modal === 'questionPrepared') html += modalQuestionPrepared(ui.modalCtx);
   else if (ui.modal === 'searchPrepared') html += modalSearchPrepared(ui.modalCtx);
   else if (ui.modal === 'editCriteria') html += modalEditCriteria();
@@ -1515,12 +1586,14 @@ function modalRequestDD(listingId) {
   if (!l) return '<div class="modal-title">Annonce introuvable</div>';
   var text = buildDDRequestPrompt(l);
   var html = '<div class="modal-title">Demander une Due Diligence</div>';
-  html += '<div class="modal-sub">Déjà copié dans ton presse-papier — colle dans le chat. Je fais l\'analyse complète (financier, commercial, opérationnel, juridique, structuration, création de valeur) et je te redonne un bloc JSON à coller ci-dessous pour l\'installer directement dans l\'onglet Due diligence.</div>';
+  html += '<div class="agent-box"><button class="btn-primary" onclick="PSR.runDDAutomatically(\''+listingId+'\')">🤖 Générer automatiquement</button>';
+  html += '<div id="psr-auto-status-dd" class="fin-note" style="margin-top:6px;">Utilise ta clé API Anthropic configurée sur Supabase.</div></div>';
+  html += '<div class="modal-sub" style="margin-top:16px;">Ou : déjà copié dans ton presse-papier — colle dans le chat. Je fais l\'analyse complète (financier, commercial, opérationnel, juridique, structuration, création de valeur) et je te redonne un bloc JSON à coller ci-dessous pour l\'installer directement dans l\'onglet Due diligence.</div>';
   html += modalCopyBox(text);
   html += '<div class="paste-box">';
   html += '<label style="margin-top:0;">Une fois ma réponse reçue : colle ici le bloc JSON</label>';
   html += '<textarea class="list-textarea" id="psr-dd-paste-'+listingId+'" placeholder="Colle ici le bloc ```json que je te donne dans le chat…"></textarea>';
-  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-primary" onclick="PSR.applyCustomDD(\''+listingId+'\')">Installer cette Due Diligence</button></div>';
+  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-outline" onclick="PSR.applyCustomDD(\''+listingId+'\')">Installer cette Due Diligence (manuel)</button></div>';
   html += '</div>';
   return html;
 }
@@ -1534,12 +1607,14 @@ function modalQuestionPrepared(ctx) {
 
 function modalSearchPrepared(ctx) {
   var html = '<div class="modal-title">Recherche enregistrée</div>';
-  html += '<div class="modal-sub">Déjà copié dans ton presse-papier — colle directement dans le chat. Les annonces déjà supprimées sont listées dedans pour que je ne te les propose jamais à nouveau.</div>';
+  html += '<div class="agent-box"><button class="btn-primary" onclick="PSR.runSearchAutomatically()">🤖 Lancer automatiquement</button>';
+  html += '<div id="psr-auto-status-search" class="fin-note" style="margin-top:6px;">Utilise ta clé API Anthropic configurée sur Supabase.</div></div>';
+  html += '<div class="modal-sub" style="margin-top:16px;">Ou : déjà copié dans ton presse-papier — colle directement dans le chat. Les annonces déjà supprimées sont listées dedans pour que je ne te les propose jamais à nouveau.</div>';
   html += modalCopyBox(ctx.text);
   html += '<div class="paste-box">';
   html += '<label style="margin-top:0;">Une fois ma réponse reçue : colle ici le bloc JSON que je te donne</label>';
   html += '<textarea class="list-textarea" id="psr-paste-result" placeholder="Colle ici le bloc ```json que je te donne dans le chat…"></textarea>';
-  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-primary" onclick="PSR.applyNewProposals()">Remplacer les 5 propositions</button></div>';
+  html += '<div class="modal-actions" style="margin-top:10px;"><button class="btn-outline" onclick="PSR.applyNewProposals()">Remplacer les 5 propositions (manuel)</button></div>';
   html += '</div>';
   return html;
 }
@@ -1847,6 +1922,52 @@ function viewFinancing() {
 
 /* ============================= ACTIONS ============================= */
 
+function applyProposalsFromText(raw) {
+  if (!raw || !raw.trim()) { showToast('Rien à traiter — texte vide.'); return false; }
+  var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  var parsed;
+  try { parsed = JSON.parse(cleaned); }
+  catch(e) { showToast('JSON invalide — vérifie que le bloc est complet.'); return false; }
+  if (!Array.isArray(parsed) || parsed.length === 0) { showToast('Le JSON doit être un tableau de propositions.'); return false; }
+  var valid = parsed.every(function(p){ return p && p.id && p.name && Array.isArray(p.criteria); });
+  if (!valid) { showToast('Chaque proposition doit au moins avoir id, name et criteria.'); return false; }
+  state.currentProposals = parsed;
+  state.currentProposalsUpdatedAt = new Date().toISOString();
+  persist();
+  ui.modal = null;
+  ui.tab = 'recherche';
+  showToast(parsed.length + ' nouvelle(s) proposition(s) chargée(s).');
+  render();
+  return true;
+}
+
+async function callAgent(action, prompt) {
+  var res = await sb.functions.invoke('ai-agent', { body: { action: action, prompt: prompt } });
+  if (res.error) { throw new Error(res.error.message || String(res.error)); }
+  if (res.data && res.data.error) { throw new Error(res.data.error); }
+  return res.data && res.data.text;
+}
+
+function applyCustomDDFromText(sourceId, raw) {
+  if (!raw || !raw.trim()) { showToast('Rien à traiter — texte vide.'); return false; }
+  var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  var parsed;
+  try { parsed = JSON.parse(cleaned); }
+  catch(e) { showToast('JSON invalide — vérifie que le bloc est complet.'); return false; }
+  if (!parsed || !Array.isArray(parsed.sections) || !parsed.verdict) {
+    showToast('Le JSON doit contenir au moins "verdict" et "sections".');
+    return false;
+  }
+  state.customDD[sourceId] = parsed;
+  persist();
+  ui.modal = null;
+  ui.tab = 'dd';
+  ui.ddSelected = sourceId;
+  showToast('Due diligence installée.');
+  render();
+  return true;
+}
+
 window.PSR = {
 
   authSignIn: function() {
@@ -1945,20 +2066,21 @@ window.PSR = {
   applyNewProposals: function() {
     var raw = document.getElementById('psr-paste-result').value.trim();
     if (!raw) { showToast('Colle d\'abord le bloc JSON que je t\'ai donné dans le chat.'); return; }
-    var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
-    var parsed;
-    try { parsed = JSON.parse(cleaned); }
-    catch(e) { showToast('JSON invalide — vérifie que tu as collé le bloc en entier, tel quel.'); return; }
-    if (!Array.isArray(parsed) || parsed.length === 0) { showToast('Le JSON doit être un tableau de propositions.'); return; }
-    var valid = parsed.every(function(p){ return p && p.id && p.name && Array.isArray(p.criteria); });
-    if (!valid) { showToast('Chaque proposition doit au moins avoir id, name et criteria.'); return; }
-    state.currentProposals = parsed;
-    state.currentProposalsUpdatedAt = new Date().toISOString();
-    persist();
-    ui.modal = null;
-    ui.tab = 'recherche';
-    showToast(parsed.length + ' nouvelle(s) proposition(s) chargée(s).');
-    render();
+    applyProposalsFromText(raw);
+  },
+
+  runSearchAutomatically: function() {
+    var statusEl = document.getElementById('psr-auto-status-search');
+    var prompt = ui.modalCtx && ui.modalCtx.text;
+    if (!prompt) return;
+    if (statusEl) statusEl.textContent = 'Recherche en cours (peut prendre 20-30 secondes)…';
+    callAgent('search', prompt).then(function(text){
+      var ok = applyProposalsFromText(text);
+      if (!ok) { var el = document.getElementById('psr-auto-status-search'); if (el) el.textContent = 'Réponse reçue mais non exploitable telle quelle — utilise le mode manuel ci-dessous.'; }
+    }).catch(function(err){
+      var el = document.getElementById('psr-auto-status-search');
+      if (el) el.textContent = 'Erreur : ' + err.message;
+    });
   },
 
   saveProposal: function(pid) {
@@ -2095,6 +2217,21 @@ window.PSR = {
     }
   },
 
+  answerQuestionAutomatically: function(key, idx) {
+    var entry = state.questionsLog[key] && state.questionsLog[key][idx];
+    if (!entry || !entry.fullPrompt) return;
+    var statusEl = document.getElementById('psr-auto-status-q-'+key+'-'+idx);
+    if (statusEl) statusEl.textContent = 'Réflexion en cours…';
+    callAgent('question', entry.fullPrompt).then(function(text){
+      entry.a = text;
+      persist();
+      render();
+    }).catch(function(err){
+      var el = document.getElementById('psr-auto-status-q-'+key+'-'+idx);
+      if (el) el.textContent = 'Erreur : ' + err.message;
+    });
+  },
+
   requestDD: function(listingId) {
     var l = findSaved(listingId);
     if (!l) return;
@@ -2104,6 +2241,21 @@ window.PSR = {
     render();
   },
 
+  runDDAutomatically: function(listingId) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    var statusEl = document.getElementById('psr-auto-status-dd');
+    var prompt = buildDDRequestPrompt(l);
+    if (statusEl) statusEl.textContent = 'Analyse en cours (peut prendre 20-30 secondes)…';
+    callAgent('dd', prompt).then(function(text){
+      var ok = applyCustomDDFromText(l.sourceId, text);
+      if (!ok) { var el = document.getElementById('psr-auto-status-dd'); if (el) el.textContent = 'Réponse reçue mais non exploitable telle quelle — utilise le mode manuel ci-dessous.'; }
+    }).catch(function(err){
+      var el = document.getElementById('psr-auto-status-dd');
+      if (el) el.textContent = 'Erreur : ' + err.message;
+    });
+  },
+
   applyCustomDD: function(listingId) {
     var l = findSaved(listingId);
     if (!l) return;
@@ -2111,20 +2263,36 @@ window.PSR = {
     if (!el) return;
     var raw = el.value.trim();
     if (!raw) { showToast('Colle d\'abord le bloc JSON que je t\'ai donné dans le chat.'); return; }
+    applyCustomDDFromText(l.sourceId, raw);
+  },
+
+  requestDeepenDD: function(sourceId) {
+    var text = buildDeepenPrompt(sourceId);
+    try { navigator.clipboard.writeText(text); } catch(e) {}
+    ui.modal = 'deepenDD'; ui.modalCtx = sourceId;
+    render();
+  },
+
+  applyDeepenDD: function(sourceId) {
+    var el = document.getElementById('psr-deepen-paste-'+sourceId);
+    if (!el) return;
+    var raw = el.value.trim();
+    if (!raw) { showToast('Colle d\'abord le bloc JSON que je t\'ai donné dans le chat.'); return; }
     var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
     var parsed;
     try { parsed = JSON.parse(cleaned); }
-    catch(e) { showToast('JSON invalide — vérifie que tu as collé le bloc en entier, tel quel.'); return; }
-    if (!parsed || !Array.isArray(parsed.sections) || !parsed.verdict) {
-      showToast('Le JSON doit contenir au moins "verdict" et "sections".');
+    catch(e) { showToast('JSON invalide — vérifie que le bloc est complet.'); return; }
+    if (!parsed || !Array.isArray(parsed.newSections)) {
+      showToast('Le JSON doit contenir au moins "newSections" (tableau).');
       return;
     }
-    state.customDD[l.sourceId] = parsed;
+    if (!state.ddAddenda[sourceId]) state.ddAddenda[sourceId] = { sections: [], verdictOverride: null, verdictToneOverride: null };
+    state.ddAddenda[sourceId].sections = state.ddAddenda[sourceId].sections.concat(parsed.newSections);
+    if (parsed.updatedVerdict) state.ddAddenda[sourceId].verdictOverride = parsed.updatedVerdict;
+    if (parsed.updatedVerdictTone) state.ddAddenda[sourceId].verdictToneOverride = parsed.updatedVerdictTone;
     persist();
     ui.modal = null;
-    ui.tab = 'dd';
-    ui.ddSelected = l.sourceId;
-    showToast('Due diligence installée.');
+    showToast('Approfondissement ajouté à la DD.');
     render();
   },
 
@@ -2132,9 +2300,6 @@ window.PSR = {
     var ta = document.getElementById('psr-question-'+key);
     var q = ta.value.trim();
     if (!q) { showToast('Écris une question avant de continuer.'); return; }
-    if (!state.questionsLog[key]) state.questionsLog[key] = [];
-    state.questionsLog[key].push({ q: q, a: null, date: new Date().toISOString() });
-    persist();
 
     var contextText = '';
     if (context === 'dd') {
@@ -2147,6 +2312,12 @@ window.PSR = {
       contextText = "Comparaison en cours entre : " + names.join(' / ') + ".";
     }
     var text = contextText + "\n\nMa question : " + q + "\n\n(Réponds directement dans le chat ; je collerai ta réponse dans la case dédiée sous cette question.)";
+    var agentText = contextText + "\n\nMa question : " + q;
+
+    if (!state.questionsLog[key]) state.questionsLog[key] = [];
+    state.questionsLog[key].push({ q: q, a: null, date: new Date().toISOString(), fullPrompt: agentText });
+    persist();
+
     try { navigator.clipboard.writeText(text); } catch(e) {}
     ui.modal = 'questionPrepared'; ui.modalCtx = { text: text };
     render();
