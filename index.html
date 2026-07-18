@@ -761,7 +761,8 @@ function freshDefaultState() {
     financingSelection: [],
     financingData: {},
     customDD: {},
-    ddAddenda: {}
+    ddAddenda: {},
+    agentMemory: "Priorise les cédants proches de la retraite (transmission plus simple, moins de tension de négo). Vérifie la concentration client en priorité avant tout NDA — c'est le point qui a fait le plus souvent défaut jusqu'ici. Le montage cible 0 % d'apport personnel (trésorerie cible + crédit vendeur + dette bancaire). Objectif : prix d'achat < 3x le résultat annuel. Signale clairement quand un dossier dépasse cette cible plutôt que de l'écarter silencieusement."
   };
 }
 var state = freshDefaultState();
@@ -1457,6 +1458,10 @@ function modalEditCriteria() {
   html += '<label>Pilotage / gérant</label><textarea id="ec-pilotage">'+esc(c.pilotage)+'</textarea>';
   html += '<label>Logique de développement (build-up)</label><textarea id="ec-developpement">'+esc(c.developpement)+'</textarea>';
 
+  html += '<div class="form-divider">Mémoire de l\'agent automatique</div>';
+  html += '<div class="fin-note">Inclus dans chaque appel automatique (recherche, DD, questions) — c\'est la façon la plus fiable de lui donner du contexte durable, vu qu\'il ne se souvient de rien d\'un appel à l\'autre.</div>';
+  html += '<label>Notes et apprentissages</label><textarea id="ec-agentMemory" style="min-height:110px;">'+esc(state.agentMemory||'')+'</textarea>';
+
   html += '<div class="modal-actions"><button class="btn-outline" onclick="PSR.resetCriteria()">Réinitialiser aux valeurs d\'origine</button><button class="btn-primary" onclick="PSR.submitEditCriteria()">Enregistrer</button></div>';
   return html;
 }
@@ -1942,7 +1947,7 @@ function applyProposalsFromText(raw) {
 }
 
 async function callAgent(action, prompt) {
-  var res = await sb.functions.invoke('ai-agent', { body: { action: action, prompt: prompt } });
+  var res = await sb.functions.invoke('ai-agent', { body: { action: action, prompt: prompt, agentMemory: state.agentMemory || '' } });
   if (res.error) { throw new Error(res.error.message || String(res.error)); }
   if (res.data && res.data.error) { throw new Error(res.data.error); }
   return res.data && res.data.text;
@@ -2050,6 +2055,7 @@ window.PSR = {
       developpement: document.getElementById('ec-developpement').value.trim()
     };
     state.searchCriteria = c;
+    state.agentMemory = document.getElementById('ec-agentMemory').value.trim();
     persist();
     ui.modal = null;
     showToast('Caractéristiques de recherche enregistrées.');
