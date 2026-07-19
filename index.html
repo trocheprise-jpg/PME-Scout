@@ -177,6 +177,22 @@
 #pme-scout-root select.status-select.status-acquis, #pme-scout-root button.tag-btn.status-acquis.active { background: var(--ink); color:#fff; border-color:var(--ink); }
 #pme-scout-root select.status-select.status-abandonne, #pme-scout-root button.tag-btn.status-abandonne.active { background: var(--slate); color:#fff; border-color:var(--slate); }
 #pme-scout-root .dossier.status-abandonne { opacity: 0.55; }
+#pme-scout-root select.conf-select { font-family:'IBM Plex Mono',monospace; font-size:10.5px; border-radius:12px; padding:3px 8px; border:1px solid var(--line-strong); background:var(--paper-light); color:var(--ink-soft); }
+#pme-scout-root select.conf-select.conf-teaser { background: var(--amber-bg); color: var(--brass-dim); border-color: var(--brass-light); }
+#pme-scout-root select.conf-select.conf-verifie { background: var(--forest-bg); color: var(--forest); border-color: var(--forest); }
+#pme-scout-root select.conf-select.conf-dataroom { background: var(--ink); color: var(--paper-light); border-color: var(--ink); }
+#pme-scout-root .meta-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+#pme-scout-root .badge-mini { font-family:'IBM Plex Mono',monospace; font-size:10.5px; padding:3px 9px; border-radius:12px; border:1px solid var(--line-strong); background:var(--paper-light); color:var(--ink-soft); }
+#pme-scout-root .badge-mini.warn { background: var(--vermillion-bg); color: var(--vermillion); border-color: var(--vermillion); }
+#pme-scout-root .badge-mini.soon { background: var(--amber-bg); color: var(--brass-dim); border-color: var(--brass-light); }
+#pme-scout-root .na-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+#pme-scout-root .na-row input[type=date] { border:1px solid var(--line-strong); border-radius:5px; padding:5px 8px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:#fff; }
+#pme-scout-root .na-row input[type=text] { flex:1; min-width:140px; border:1px solid var(--line-strong); border-radius:5px; padding:5px 8px; font-size:12px; background:#fff; }
+#pme-scout-root .checklist-item { display:flex; align-items:flex-start; gap:9px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px; }
+#pme-scout-root .checklist-item input[type=checkbox] { margin-top:2px; }
+#pme-scout-root .checklist-date { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--forest); margin-left:auto; white-space:nowrap; }
+#pme-scout-root .verify-summary { font-size:12px; margin-bottom:10px; padding:8px 10px; border-radius:5px; background:var(--paper-deep); }
+#pme-scout-root .verify-summary.has-alerts { background: var(--vermillion-bg); color: var(--vermillion); }
 
 /* MODAL */
 #pme-scout-root .modal-overlay { position: fixed; inset: 0; background: rgba(27,35,48,0.55); z-index: 100; display:flex; align-items:center; justify-content:center; padding: 20px; }
@@ -537,6 +553,13 @@ var DUE_DILIGENCE = {
             paras: [
               "Le scénario B est structurellement le plus intéressant au regard de ta logique d'acquisition : la trésorerie excédentaire de la cible (351 k€) peut financer près de la moitié du prix total via une remontée post-closing, ce qui réduit fortement le besoin de dette bancaire et d'apport personnel. À vérifier avec un expert-comptable : faisabilité légale et fiscale de la remontée de trésorerie (distribution de dividende exceptionnel avant ou après cession, ou mécanisme de holding avec intégration fiscale)."
             ]
+          },
+          {
+            h4: "4.3 Comparables sectoriels",
+            paras: [
+              "PME industrielles françaises (EBE 500 k€-5 M€) : fourchette générale 4x à 8x l'EBE selon profil et sous-secteur. Spécifiquement pour les TPE industrielles (Epsilon Research, base des cessions PME < 10 M€ de CA) : multiples observés de 4x à 6x. (Sources : Argos Mid-Market Index, Epsilon Research — benchmarks 2025-2026, via riviqo.com.)",
+              "Le multiple estimé de ce dossier (≈1,8x-2,2x) est NETTEMENT sous cette fourchette sectorielle (4x-6x). Deux lectures possibles, à ne pas trancher sans premier contact : (1) opportunité réelle — cohérent avec le profil \"belle endormie\" (dirigeant vieillissant, faible visibilité commerciale, décote de taille pour une TPE < 1M€ de CA qui peut légitimement descendre l'estimation) ; (2) signal d'alerte — un écart aussi marqué avec le marché mérite d'être expliqué par le cédant plutôt que simplement accueilli comme une aubaine. Poser la question directement : \"pourquoi un prix aussi inférieur au marché du secteur ?\""
+            ]
           }
         ]
       },
@@ -600,6 +623,16 @@ var DUE_DILIGENCE = {
             ]
           }
         ]
+      },
+      {
+        h: "8. Pièges de valorisation à surveiller",
+        vigilanceTable: [
+          {label:"Ancrage sur le premier chiffre entendu", level:"MODERE", note:"Le prix de 280 k€ n'a jamais été confronté à une valorisation indépendante avant d'être vu dans l'annonce — vérifie ton propre prix cible (onglet Financement) AVANT le premier contact, pas après, pour ne pas ancrer ton jugement sur ce chiffre."},
+          {label:"Synergies non prouvées", level:"MODERE", note:"Toute survalorisation implicite liée à de futures synergies de build-up (mutualisation admin, cross-sell avec une autre acquisition) reste hypothétique tant qu'aucune 2e cible n'est réellement signée — ne pas l'intégrer dans le prix offert sur ce seul dossier."},
+          {label:"EBE non retraité correctement", level:"ELEVE", note:"Résultat net très volatil (25 k€ à 95 k€ sur 3 ans), EBE lui-même non communiqué dans l'annonce. Risque réel de raisonner sur un EBE de référence mal établi tant que la baisse de 2025 n'est pas expliquée par le cédant."},
+          {label:"Hypothèses de croissance irréalistes", level:"FAIBLE", note:"Aucune projection de croissance mise en avant à ce stade. Risque à réévaluer si le cédant présente un plan de développement lors du premier échange."},
+          {label:"Biais d'engagement (sunk cost)", level:"FAIBLE", note:"Dossier pas encore engagé — risque faible aujourd'hui, mais à surveiller activement une fois le premier contact pris : c'est le multiple le plus attractif du pipeline, ce qui crée précisément le terrain pour vouloir \"sécuriser\" le deal plutôt que challenger les concessions en cours de négociation."}
+        ]
       }
     ]
   }
@@ -658,7 +691,11 @@ DUE_DILIGENCE.p2 = {
           ["Apport holding/investisseur","~45 000 €","~10 %"],
           ["TOTAL","445 000 €","100 %"]
         ]
-      }, paras:["Capacité de remboursement : EBE 153k€ → capacité service dette ~110k€/an après IS. Remboursement de la dette bancaire (150k) en ~18 mois. Montage très confortable."]}
+      }, paras:["Capacité de remboursement : EBE 153k€ → capacité service dette ~110k€/an après IS. Remboursement de la dette bancaire (150k) en ~18 mois. Montage très confortable."]},
+      {h4:"4.3 Comparables sectoriels", paras:[
+        "Multiples PME françaises 2026 pour le BTP et l'installation électrique : bas de fourchette du marché, généralement 3x à 4x l'EBE (contre 5,5x en moyenne toutes PME françaises confondues, et 8-15x pour la tech). Un acquéreur industriel structuré paie plutôt 5x-7x pour ce type de profil avec certification Qualifelec. (Sources : barèmes captain.fr et entreprisma.fr, données 2025-2026 agrégées Financyal/XVal/Nimbo.)",
+        "Le multiple de ce dossier (2,91x) se situe DANS la fourchette basse BTP/installation (3x-4x), légèrement en dessous — cohérent avec un cédant pressé par un départ à la retraite plutôt qu'avec un problème caché. Comparé à la fourchette \"acquéreur industriel\" (5x-7x), l'écart est significatif et confirme l'attractivité déjà identifiée dans le verdict."
+      ]}
     ]},
     { h:"5. Points de vigilance", vigilanceTable:[
       {label:"Risque humain : clients liés au dirigeant", level:"ELEVE", note:"Vérifier si la relation est portée par le gérant ou par les techniciens. Exiger 6 mois d'accompagnement minimum."},
@@ -705,6 +742,13 @@ DUE_DILIGENCE.p2 = {
         "Quel est le prix si vous cédez aussi les murs ?",
         "Avez-vous une préférence pour le crédit vendeur ?"
       ]}
+    ]},
+    { h:"8. Pièges de valorisation à surveiller", vigilanceTable:[
+      {label:"Ancrage sur le premier chiffre entendu", level:"FAIBLE", note:"Le prix de 445 k€ a déjà été confronté aux barèmes sectoriels (2,91x vs 3x-7x selon profil d'acquéreur) dans cette même analyse — bon réflexe déjà appliqué, à maintenir lors de la négociation réelle."},
+      {label:"Synergies non prouvées", level:"FAIBLE", note:"Aucune synergie de build-up n'a été utilisée pour justifier ce prix jusqu'ici ; le raisonnement reste standalone sur les seuls chiffres de l'entreprise."},
+      {label:"EBE non retraité correctement", level:"MODERE", note:"Les retraitements (rémunération dirigeant, loyer de marché, charges non récurrentes) sont mentionnés mais leur détail précis reste à obtenir via la note CCI — déjà identifié comme point de vérification en 4.1, à ne pas signer sans l'avoir en main."},
+      {label:"Hypothèses de croissance irréalistes", level:"FAIBLE", note:"Aucune hypothèse de croissance affichée ; l'évaluation repose sur l'historique et une clientèle réglementairement captive (RE2020, DPE)."},
+      {label:"Biais d'engagement (sunk cost)", level:"MODERE", note:"C'est le dossier le plus abouti du pipeline (DD complète déjà réalisée) — risque réel de le pousser par confort ou par avancement du travail déjà fait, plutôt que par mérite réel, si un nouveau signal négatif apparaissait au premier contact avec le cédant."}
     ]}
   ]
 };
@@ -777,6 +821,40 @@ var STATUS_OPTIONS = [
   { id: 'abandonne', label: 'Abandonné' }
 ];
 function statusLabel(id) { var s = STATUS_OPTIONS.find(function(o){return o.id===id;}); return s ? s.label : 'À qualifier'; }
+
+var CONFIDENCE_OPTIONS = [
+  { id: 'teaser', label: "Données d'annonce (non vérifiées)" },
+  { id: 'verifie', label: 'Comptes vérifiés' },
+  { id: 'dataroom', label: 'Data room (post-NDA)' }
+];
+function confidenceLabel(id) { var o = CONFIDENCE_OPTIONS.find(function(x){return x.id===id;}); return o ? o.label : CONFIDENCE_OPTIONS[0].label; }
+
+var DOC_CHECKLIST_ITEMS = [
+  { id: 'liasses', label: 'Liasses fiscales des 3 derniers exercices' },
+  { id: 'bilans', label: 'Bilans & comptes de résultat détaillés' },
+  { id: 'urssaf', label: 'Attestation de régularité URSSAF' },
+  { id: 'fiscale', label: 'Attestation de régularité fiscale' },
+  { id: 'bail', label: 'Bail commercial (durée, loyer, clauses de cession)' },
+  { id: 'clients', label: 'Contrats clients clés (top 5) + répartition du CA' },
+  { id: 'fournisseurs', label: 'Contrats fournisseurs critiques' },
+  { id: 'social', label: 'Registre du personnel + contrats de travail' },
+  { id: 'contentieux', label: "Contentieux en cours (prud'hommes, commercial, fiscal)" },
+  { id: 'juridique', label: "Statuts, K-bis, PV d'assemblées" }
+];
+function docProgress(l) {
+  var ck = l.docChecklist || {};
+  var done = DOC_CHECKLIST_ITEMS.filter(function(it){ return ck[it.id] && ck[it.id].done; }).length;
+  return { done: done, total: DOC_CHECKLIST_ITEMS.length };
+}
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function naUrgency(l) {
+  if (!l.nextAction || !l.nextAction.date) return 'none';
+  var t = todayStr();
+  if (l.nextAction.date < t) return 'overdue';
+  var in3 = new Date(Date.now() + 3*24*3600*1000).toISOString().slice(0,10);
+  if (l.nextAction.date <= in3) return 'soon';
+  return 'later';
+}
 
 function safeParse(str, fallback) {
   try { return JSON.parse(str); } catch(e) { return fallback; }
@@ -1069,6 +1147,18 @@ function viewSaved() {
       && (ui.statusFilter === null || (l.status||'a_qualifier') === ui.statusFilter);
   });
 
+  var urgRank = { overdue: 0, soon: 1, later: 2, none: 3 };
+  filtered = filtered.slice().sort(function(a,b){
+    var ra = urgRank[naUrgency(a)], rb = urgRank[naUrgency(b)];
+    if (ra !== rb) return ra - rb;
+    var da = a.nextAction&&a.nextAction.date||'9999', db = b.nextAction&&b.nextAction.date||'9999';
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+  var nbOverdue = state.savedListings.filter(function(l){ return naUrgency(l)==='overdue'; }).length;
+  if (nbOverdue > 0) {
+    html += '<div class="vigilance-box"><div class="v-title">Relances en retard</div><div class="v-item">'+nbOverdue+' dossier(s) avec une prochaine action dépassée — ils sont remontés en tête de liste.</div></div>';
+  }
+
   if (filtered.length === 0) {
     html += '<div class="empty-state"><span class="serif">Aucune annonce ici</span>Sauvegarde une proposition depuis l\'onglet Recherche, ou ajoute-en une manuellement.</div>';
   } else {
@@ -1091,6 +1181,21 @@ function renderSavedCard(l) {
   STATUS_OPTIONS.forEach(function(o){ html += '<option value="'+o.id+'" '+(o.id===st?'selected':'')+'>'+esc(o.label)+'</option>'; });
   html += '</select>';
   html += '</div>';
+
+  var conf = l.dataConfidence || 'teaser';
+  var dp = docProgress(l);
+  html += '<div class="meta-row">';
+  html += '<select class="conf-select conf-'+conf+'" onchange="PSR.setConfidence(\''+l.id+'\',this.value)">';
+  CONFIDENCE_OPTIONS.forEach(function(o){ html += '<option value="'+o.id+'" '+(o.id===conf?'selected':'')+'>'+esc(o.label)+'</option>'; });
+  html += '</select>';
+  html += '<button class="badge-mini'+(dp.done<dp.total && (l.status==='negociation'||l.status==='acquis')?' warn':'')+'" onclick="PSR.openDocChecklist(\''+l.id+'\')">Docs '+dp.done+'/'+dp.total+'</button>';
+  html += '<button class="badge-mini" onclick="PSR.openVerifyModal(\''+l.id+'\')">🤖 Vérifier les comptes déposés</button>';
+  html += '</div>';
+  if (l.verification && l.verification.result) {
+    var vr = l.verification.result;
+    var nbAlertes = (vr.alertes||[]).length;
+    html += '<div class="verify-summary'+(nbAlertes>0?' has-alerts':'')+'">Vérification du '+esc(formatDateFr(l.verification.date))+' — '+(nbAlertes>0?(nbAlertes+' alerte(s). '):'aucune alerte. ')+esc((vr.conclusion||'').slice(0,140))+'</div>';
+  }
   html += '<div class="dossier-body">';
   if (l.pitch) html += '<div class="pitch">'+esc(l.pitch)+'</div>';
   html += '<div class="figures-grid">';
@@ -1114,6 +1219,14 @@ function renderSavedCard(l) {
   if (l.url) html += '<div class="source-line">Source : <a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.url)+'</a></div>';
 
   html += '<label style="font-size:11px;color:var(--slate);margin-top:6px;display:block;">Notes personnelles</label>';
+  var urg = naUrgency(l);
+  html += '<div class="na-row">';
+  html += '<span style="font-size:11px;color:var(--slate);">Prochaine action :</span>';
+  html += '<input type="date" value="'+esc(l.nextAction&&l.nextAction.date||'')+'" onchange="PSR.updateNextAction(\''+l.id+'\',\'date\',this.value)">';
+  html += '<input type="text" placeholder="Ex : relancer le cédant, envoyer NDA…" value="'+esc(l.nextAction&&l.nextAction.label||'')+'" onchange="PSR.updateNextAction(\''+l.id+'\',\'label\',this.value)">';
+  if (urg==='overdue') html += '<span class="badge-mini warn">EN RETARD</span>';
+  else if (urg==='soon') html += '<span class="badge-mini soon">Sous 3 jours</span>';
+  html += '</div>';
   html += '<textarea class="notes-box" placeholder="Impressions, prochaine étape, ce qui te fait hésiter…" onchange="PSR.updateNotes(\''+l.id+'\',this.value)">'+esc(l.notes||'')+'</textarea>';
 
   html += '<div class="dossier-actions">';
@@ -1235,7 +1348,7 @@ var DEEPEN_JSON_SCHEMA_HINT =
   '  "updatedVerdict": "... uniquement si le verdict global doit changer, sinon null",\n' +
   '  "updatedVerdictTone": "ok|attention|ko — uniquement si changement, sinon null",\n' +
   '  "newSections": [\n' +
-  '    {"h": "8. Approfondissement — JJ mois AAAA", "sub": [{"h4":"...", "paras":["...","..."]}]}\n' +
+  '    {"h": "9. Approfondissement — JJ mois AAAA", "sub": [{"h4":"...", "paras":["...","..."]}]}\n' +
   '  ]\n' +
   '  // newSections peut contenir plusieurs éléments, mêmes formats que les sections existantes :\n' +
   '  // table (tableau clé/valeur), criteriaTable+verdictLine, vigilanceTable, sub (h4+paras/list), verdictText\n' +
@@ -1368,6 +1481,19 @@ function viewCompare() {
       var r = computeFinancingModel(getFinancingData(l)).ratioRembEBE;
       return r===null ? '—' : fmtPct1(r*100);
     }},
+    {label:"AJOUT — Confiance des données", get:function(l){
+      return confidenceLabel(l.dataConfidence||'teaser');
+    }},
+    {label:"AJOUT — Vérif. comptes déposés", get:function(l){
+      if (!l.verification || !l.verification.result) return 'Non faite';
+      var nb = (l.verification.result.alertes||[]).length;
+      return nb > 0 ? (nb + ' alerte(s)') : 'OK — aucune alerte';
+    }},
+    {label:"AJOUT — Prix cible d'offre", get:function(l){
+      if (state.financingSelection.indexOf(l.id) === -1) return '—';
+      var oe = computeOfferAndExit(getFinancingData(l), parseNumberLoose(l.prix));
+      return fmtEUR(oe.prixCible);
+    }},
     {label:"AJOUT — Score global", get:function(l){
       var p = findProposal(l.sourceId);
       var dd = getEffectiveDD(l.sourceId);
@@ -1408,7 +1534,7 @@ function viewCompare() {
 
 /* ============================= MODALS ============================= */
 
-var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true, importListing: true };
+var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true, importListing: true, verifyListing: true, docChecklist: true };
 
 function renderModal() {
   var root = document.getElementById('psr-modal-root');
@@ -1425,6 +1551,8 @@ function renderModal() {
   else if (ui.modal === 'requestDD') html += modalRequestDD(ui.modalCtx);
   else if (ui.modal === 'deepenDD') html += modalDeepenDD(ui.modalCtx);
   else if (ui.modal === 'importListing') html += modalImportListing();
+  else if (ui.modal === 'verifyListing') html += modalVerifyListing(ui.modalCtx);
+  else if (ui.modal === 'docChecklist') html += modalDocChecklist(ui.modalCtx);
   else if (ui.modal === 'questionPrepared') html += modalQuestionPrepared(ui.modalCtx);
   else if (ui.modal === 'searchPrepared') html += modalSearchPrepared(ui.modalCtx);
   else if (ui.modal === 'editCriteria') html += modalEditCriteria();
@@ -1472,6 +1600,92 @@ function modalCopyBox(text) {
   return '<textarea class="readonly-copy" id="psr-copy-text" readonly>'+esc(text)+'</textarea>' +
     '<div class="modal-actions"><button class="btn-outline" onclick="PSR.closeModal()">Fermer</button>' +
     '<button class="btn-primary" onclick="PSR.copyText()">Copier</button></div>';
+}
+
+var VERIFY_SCHEMA_TEXT = 'Réponds avec UNIQUEMENT un bloc ```json : { "identificationPossible": true/false, "confianceIdentification": "haute|moyenne|faible|impossible", "entreprise": {"nomLegal":"...","siren":"...","source":"..."} ou null, "comptesDeposes": [{"exercice":"...","ca":"...","resultatNet":"...","capitauxPropres":"...","source":"..."}], "comparaison": [{"champ":"...","annonce":"...","depose":"...","ecart":"...","commentaire":"..."}], "alertes":["..."], "conclusion":"..." }. N\'invente jamais un SIREN ou un chiffre ; signale l\'option de confidentialité des comptes si applicable ; écart > 10 % = alerte.';
+
+function buildVerifyPrompt(l) {
+  return [
+    "Vérifie les comptes réellement déposés au greffe pour cette cible et compare-les aux chiffres annoncés (sources : pappers.fr, annuaire-entreprises.data.gouv.fr, infogreffe.fr).",
+    "",
+    "SIREN connu : " + (l.siren||'—'),
+    "Nom légal connu : " + (l.legalName||'—'),
+    "Titre de l'annonce : " + (l.name||'—'),
+    "Secteur : " + (l.sector||'—') + " | Localisation : " + (l.location||'—'),
+    "Chiffres annoncés — CA : " + (l.ca||'—') + " | EBE : " + (l.ebitda||'—') + " | Résultat : " + (l.resultat||'—') + " | Prix : " + (l.prix||'—'),
+    "",
+    VERIFY_SCHEMA_TEXT
+  ].join("\n");
+}
+
+function renderVerifyResult(vr) {
+  var html = '';
+  if (vr.identificationPossible === false) {
+    html += '<div class="vigilance-box"><div class="v-title">Identification impossible</div><div class="v-item">L\'annonce est trop anonymisée pour identifier l\'entreprise avec certitude. Renseigne le SIREN ou le nom légal (obtenu au premier contact ou post-NDA) puis relance la vérification.</div></div>';
+  }
+  if (vr.entreprise) {
+    html += '<div class="verify-summary">Entreprise identifiée ('+esc(vr.confianceIdentification||'—')+') : <b>'+esc(vr.entreprise.nomLegal||'—')+'</b> — SIREN '+esc(vr.entreprise.siren||'—')+' <span style="color:var(--slate);">('+esc(vr.entreprise.source||'')+')</span></div>';
+  }
+  if (vr.comptesDeposes && vr.comptesDeposes.length) {
+    html += '<table class="dd-table"><tr><th>Exercice</th><th>CA déposé</th><th>Résultat net</th><th>Capitaux propres</th><th>Source</th></tr>';
+    vr.comptesDeposes.forEach(function(r){ html += '<tr><td>'+esc(r.exercice||'')+'</td><td class="mono">'+esc(r.ca||'—')+'</td><td class="mono">'+esc(r.resultatNet||'—')+'</td><td class="mono">'+esc(r.capitauxPropres||'—')+'</td><td style="font-size:11px;">'+esc(r.source||'')+'</td></tr>'; });
+    html += '</table>';
+  }
+  if (vr.comparaison && vr.comparaison.length) {
+    html += '<table class="dd-table"><tr><th>Champ</th><th>Annoncé</th><th>Déposé</th><th>Écart</th><th>Commentaire</th></tr>';
+    vr.comparaison.forEach(function(r){ html += '<tr><td>'+esc(r.champ||'')+'</td><td class="mono">'+esc(r.annonce||'—')+'</td><td class="mono">'+esc(r.depose||'—')+'</td><td class="mono">'+esc(r.ecart||'—')+'</td><td style="font-size:11.5px;">'+esc(r.commentaire||'')+'</td></tr>'; });
+    html += '</table>';
+  }
+  if (vr.alertes && vr.alertes.length) {
+    html += '<div class="vigilance-box"><div class="v-title">Alertes</div>';
+    vr.alertes.forEach(function(a){ html += '<div class="v-item">'+esc(a)+'</div>'; });
+    html += '</div>';
+  }
+  if (vr.conclusion) html += '<p style="font-size:13px;line-height:1.55;">'+esc(vr.conclusion)+'</p>';
+  return html;
+}
+
+function modalVerifyListing(listingId) {
+  var l = findSaved(listingId);
+  if (!l) return '<div class="modal-title">Annonce introuvable</div>';
+  var html = '<div class="modal-title">Vérifier les comptes déposés</div>';
+  html += '<div class="modal-sub">Compare les chiffres de l\'annonce aux comptes réellement déposés au greffe (Pappers, Infogreffe). Le meilleur détecteur d\'EBE gonflé. Attention : beaucoup d\'annonces sont anonymisées et beaucoup de PME déposent leurs comptes en confidentialité — la vérification est bien plus fiable une fois le SIREN connu.</div>';
+  html += '<div class="two-col"><div><label>SIREN (si connu)</label><input type="text" id="verify-siren" value="'+esc(l.siren||'')+'" placeholder="9 chiffres"></div><div><label>Nom légal (si connu)</label><input type="text" id="verify-legalname" value="'+esc(l.legalName||'')+'"></div></div>';
+  html += '<div class="agent-box" style="margin-top:12px;"><button class="btn-primary" onclick="PSR.runVerifyAutomatically(\''+listingId+'\')">🤖 Lancer la vérification</button>';
+  html += '<div id="psr-verify-status" class="fin-note" style="margin-top:6px;">Utilise ta clé API Anthropic configurée sur Supabase (10-30 secondes).</div></div>';
+  if (l.verification && l.verification.result) {
+    html += '<div class="form-divider">Dernière vérification — '+esc(formatDateFr(l.verification.date))+'</div>';
+    html += renderVerifyResult(l.verification.result);
+    if ((l.dataConfidence||'teaser') === 'teaser') {
+      html += '<div class="modal-actions"><button class="btn-primary" onclick="PSR.markVerified(\''+listingId+'\')">Marquer les données comme vérifiées</button></div>';
+    }
+  }
+  html += '<div class="paste-box">';
+  html += '<label style="margin-top:0;">Mode manuel : copie la demande, colle-la dans le chat Claude, puis colle le bloc JSON reçu ici</label>';
+  html += '<div class="modal-actions" style="margin:6px 0;"><button class="btn-outline btn-sm" onclick="PSR.copyVerifyPrompt(\''+listingId+'\')">Copier la demande</button></div>';
+  html += '<textarea class="list-textarea" id="psr-verify-paste-'+listingId+'" placeholder="Colle ici le bloc ```json…"></textarea>';
+  html += '<div class="modal-actions" style="margin-top:8px;"><button class="btn-outline" onclick="PSR.applyVerifyResult(\''+listingId+'\')">Enregistrer le résultat (manuel)</button></div>';
+  html += '</div>';
+  return html;
+}
+
+function modalDocChecklist(listingId) {
+  var l = findSaved(listingId);
+  if (!l) return '<div class="modal-title">Annonce introuvable</div>';
+  var ck = l.docChecklist || {};
+  var dp = docProgress(l);
+  var html = '<div class="modal-title">Checklist documentaire — '+esc(l.name)+'</div>';
+  html += '<div class="modal-sub">Transforme les points de vigilance en risques levés ou non levés. '+dp.done+'/'+dp.total+' vérifiés. Un dossier ne devrait pas passer "En négociation" avec des cases non cochées.</div>';
+  DOC_CHECKLIST_ITEMS.forEach(function(it){
+    var st = ck[it.id];
+    html += '<div class="checklist-item">';
+    html += '<input type="checkbox" '+(st&&st.done?'checked':'')+' onchange="PSR.toggleDocItem(\''+listingId+'\',\''+it.id+'\',this.checked)">';
+    html += '<span>'+esc(it.label)+'</span>';
+    if (st && st.done && st.date) html += '<span class="checklist-date">✓ '+esc(formatDateFr(st.date))+'</span>';
+    html += '</div>';
+  });
+  html += '<div class="modal-actions" style="margin-top:14px;"><button class="btn-primary" onclick="PSR.closeModal()">Fermer</button></div>';
+  return html;
 }
 
 function modalImportListing() {
@@ -1605,16 +1819,23 @@ var DD_JSON_SCHEMA_HINT =
   '      {"n":5,"label":"Avantage concurrentiel","status":"ok|check|warn","note":"..."}\n' +
   '    ], "verdictLine":"synthèse sur les 5 critères"},\n' +
   '    {"h":"3. Analyse sectorielle et avantages concurrentiels", "sub":[{"h4":"3.1 ...","paras":["...","..."]}]},\n' +
-  '    {"h":"4. Analyse financière", "table":[["CA","..."],["EBE retraité","..."],["Prix demandé","..."],["Multiple","..."]], "sub":[{"h4":"4.1 Points de vérification comptable","list":["...","..."]}]},\n' +
+  '    {"h":"4. Analyse financière", "table":[["CA","..."],["EBE retraité","..."],["Prix demandé","..."],["Multiple","..."]], "sub":[{"h4":"4.1 Points de vérification comptable","list":["...","..."]},{"h4":"4.3 Comparables sectoriels","paras":["fourchette de multiples observée pour ce secteur précis en France, avec source citée (Epsilon Research, Argos Index, ou équivalent trouvé par recherche web)","comparaison chiffrée du multiple de ce dossier à cette fourchette, avec lecture (aubaine réelle vs signal à questionner)"]}]},\n' +
   '    {"h":"5. Points de vigilance", "vigilanceTable":[{"label":"...","level":"ELEVE|MODERE|FAIBLE","note":"..."}]},\n' +
   '    {"h":"6. Atouts confirmés et leviers de création de valeur", "sub":[{"h4":"6.1 Atouts confirmés","list":["...","..."]},{"h4":"6.2 Leviers de création de valeur","list":["...","..."]}]},\n' +
-  '    {"h":"7. Verdict et plan d\'action", "verdictText":"...", "sub":[{"h4":"7.1 Checklist avant contact","list":["...","..."]},{"h4":"7.2 Questions prioritaires au cédant","list":["...","..."]}]}\n' +
+  '    {"h":"7. Verdict et plan d\'action", "verdictText":"...", "sub":[{"h4":"7.1 Checklist avant contact","list":["...","..."]},{"h4":"7.2 Questions prioritaires au cédant","list":["...","..."]}]},\n' +
+  '    {"h":"8. Pièges de valorisation à surveiller", "vigilanceTable":[\n' +
+  '      {"label":"Ancrage sur le premier chiffre entendu","level":"...","note":"contextualisé à ce dossier précis, pas générique"},\n' +
+  '      {"label":"Synergies non prouvées","level":"...","note":"..."},\n' +
+  '      {"label":"EBE non retraité correctement","level":"...","note":"..."},\n' +
+  '      {"label":"Hypothèses de croissance irréalistes","level":"...","note":"..."},\n' +
+  '      {"label":"Biais d\'engagement (sunk cost)","level":"...","note":"..."}\n' +
+  '    ]}\n' +
   '  ]\n' +
   '}';
 
 function buildDDRequestPrompt(l) {
   return [
-    "Fais-moi la due diligence complète du dossier suivant, avec la structure habituelle en 7 sections.",
+    "Fais-moi la due diligence complète du dossier suivant, avec la structure habituelle en 8 sections (les 7 habituelles + la nouvelle section 8 sur les pièges de valorisation).",
     "",
     "Nom : " + (l.name||''),
     "Secteur : " + (l.sector||'—'),
@@ -1627,6 +1848,8 @@ function buildDDRequestPrompt(l) {
     "Prix indicatif : " + (l.prix||'—'),
     "Salaire dirigeant : " + (l.salaireDirigeant||'—'),
     "Notes : " + (l.notes || l.pitch || '—'),
+    "",
+    "Pour la section 4.3 (comparables sectoriels) : recherche une vraie fourchette de multiples pour ce secteur précis en France (pas un chiffre générique inventé), cite la source. Pour la section 8 (pièges de valorisation) : les 5 items sont fixes (ancrage, synergies non prouvées, EBE mal retraité, croissance irréaliste, biais d'engagement) — évalue chacun pour CE dossier précis, pas de texte générique copié-collé.",
     "",
     DD_JSON_SCHEMA_HINT
   ].join("\n");
@@ -1772,8 +1995,32 @@ function defaultFinancingData(listing) {
     vendeurMontant: 0,
     vendeurTauxPct: 0,
     vendeurDureeAnnees: 3,
-    chocCAPct: 20
+    chocCAPct: 20,
+    multipleCibleOffre: 2.5,
+    multipleRupture: 3,
+    leverDigital: 0,
+    leverPricing: 0,
+    leverAutre: 0,
+    exitYears: 6,
+    exitMultiple: 3
   };
+}
+
+function computeOfferAndExit(fd, prixDemandeNum) {
+  var ebe = (fd.ebeComptable||0) + ((fd.remuActuelle||0) - (fd.remuMarche||0)) + (fd.chargesExcep||0);
+  var adj = (fd.tresorerie||0) - (fd.dettesExistantes||0);
+  var prixCible = (fd.multipleCibleOffre||0) * ebe + adj;
+  var prixRupture = (fd.multipleRupture||0) * ebe + adj;
+  var ecartDemandeCible = prixDemandeNum - prixCible;
+  var statutPrix = prixDemandeNum <= prixCible ? 'sous_cible' : (prixDemandeNum <= prixRupture ? 'negociable' : 'hors_limite');
+  var leviers = (fd.leverDigital||0) + (fd.leverPricing||0) + (fd.leverAutre||0);
+  var ebePostLeviers = ebe + leviers;
+  var croissance = (fd.croissanceCA||0)/100;
+  var ebeSortie = ebePostLeviers * Math.pow(1+croissance, fd.exitYears||0);
+  var valeurSortie = (fd.exitMultiple||0) * ebeSortie;
+  var gainBrut = valeurSortie - prixDemandeNum;
+  return { ebe:ebe, prixCible:prixCible, prixRupture:prixRupture, ecartDemandeCible:ecartDemandeCible, statutPrix:statutPrix,
+    leviers:leviers, ebePostLeviers:ebePostLeviers, ebeSortie:ebeSortie, valeurSortie:valeurSortie, gainBrut:gainBrut };
 }
 
 function getFinancingData(listing) {
@@ -1869,6 +2116,12 @@ function renderFinancingDossier(l) {
   html += '<div class="stamp '+(m.dealInteressant?'':'warn')+'"><span class="stamp-big">'+(m.dealInteressant?'OK':'!')+'</span>'+(m.dealInteressant?'critères remplis':'à ajuster')+'</div>';
   html += '</div><div class="dossier-body">';
 
+  var confFin = l.dataConfidence || 'teaser';
+  if (confFin === 'teaser') {
+    html += '<div class="vigilance-box"><div class="v-title">Données non vérifiées</div><div class="v-item">Ce stress test repose sur les chiffres de l\'annonce, jamais recoupés avec les comptes déposés. Lance la vérification depuis la carte de l\'annonce avant de t\'appuyer sur ces résultats.</div></div>';
+  } else {
+    html += '<div class="verify-summary">Niveau de confiance : '+esc(confidenceLabel(confFin))+'</div>';
+  }
   html += '<div class="fin-note">Valeurs pré-remplies automatiquement quand c\'est possible (CA, EBE, salaire dirigeant si connu) — vérifie et corrige avant de t\'y fier. Le reste (taux, durée, apport…) est à ta main.</div>';
 
   html += '<div class="form-divider">1. Input — données de la cible</div>';
@@ -1938,6 +2191,35 @@ function renderFinancingDossier(l) {
   if (premiereAnneeAttention) {
     html += '<div class="fin-note" style="color:var(--vermillion);">Première année sous vigilance : année '+premiereAnneeAttention.annee+' (ratio remboursement/EBE ≥ 70 % ou cash-flow négatif).</div>';
   }
+
+  var prixDemandeNum = parseNumberLoose(l.prix);
+  var oe = computeOfferAndExit(fd, prixDemandeNum);
+  html += '<div class="form-divider">5. AJOUT — Prix cible d\'offre (l\'argent se gagne à l\'achat)</div>';
+  html += '<table class="dd-table fin-table"><tr><th>Variable</th><th>Valeur</th></tr>';
+  html += finFieldRow(l.id,'multipleCibleOffre','Multiple cible d\'offre (× EBE retraité)', fd.multipleCibleOffre);
+  html += finFieldRow(l.id,'multipleRupture','Multiple de rupture — walk-away (× EBE retraité)', fd.multipleRupture);
+  html += finComputedRow('Prix cible d\'offre (multiple cible × EBE + trésorerie − dettes)', fmtEUR(oe.prixCible));
+  html += finComputedRow('Prix de rupture (au-delà : tu passes ton chemin)', fmtEUR(oe.prixRupture));
+  html += finComputedRow('Prix demandé (annonce)', prixDemandeNum ? fmtEUR(prixDemandeNum) : '—');
+  html += finComputedRow('Écart demandé vs cible', prixDemandeNum ? fmtEUR(oe.ecartDemandeCible) : '—', oe.statutPrix==='hors_limite');
+  var statutTxt = oe.statutPrix==='sous_cible' ? 'Sous ta cible — bonne position de départ' : (oe.statutPrix==='negociable' ? 'Entre cible et rupture — à négocier vers le bas' : 'AU-DESSUS de ton prix de rupture');
+  html += finComputedRow('Lecture', statutTxt, oe.statutPrix==='hors_limite');
+  html += '</table>';
+
+  html += '<div class="form-divider">6. AJOUT — Création de valeur (thèse "belle endormie") &amp; sortie</div>';
+  html += '<div class="fin-note">Impact EBE annuel estimé de chaque levier, une fois en régime de croisière. Reste prudent : mieux vaut sous-estimer ici et sur-délivrer ensuite.</div>';
+  html += '<table class="dd-table fin-table"><tr><th>Variable</th><th>Valeur</th></tr>';
+  html += finFieldRow(l.id,'leverDigital','Levier digital / prospection structurée (impact EBE €/an)', fd.leverDigital);
+  html += finFieldRow(l.id,'leverPricing','Levier pricing / renégociation tarifaire (impact EBE €/an)', fd.leverPricing);
+  html += finFieldRow(l.id,'leverAutre','Autres leviers (CRM, achats, offre…) (impact EBE €/an)', fd.leverAutre);
+  html += finComputedRow('EBE post-leviers', fmtEUR(oe.ebePostLeviers));
+  html += finFieldRow(l.id,'exitYears','Horizon de sortie (années)', fd.exitYears);
+  html += finFieldRow(l.id,'exitMultiple','Multiple de sortie (× EBE)', fd.exitMultiple);
+  html += finComputedRow('EBE projeté à la sortie (croissance CA appliquée)', fmtEUR(oe.ebeSortie));
+  html += finComputedRow('Valeur d\'entreprise estimée à la sortie', fmtEUR(oe.valeurSortie));
+  html += finComputedRow('Gain brut indicatif (valeur de sortie − prix demandé)', prixDemandeNum ? fmtEUR(oe.gainBrut) : '—');
+  html += '</table>';
+  html += '<div class="fin-note">Estimation volontairement grossière : elle ignore la dette résiduelle, les cash-flows accumulés et la fiscalité de cession. Elle sert à comparer des cibles entre elles, pas à promettre un gain.</div>';
 
   html += '<div class="dossier-actions"><button class="btn-danger btn-sm" onclick="PSR.toggleFinancingSelection(\''+l.id+'\')">Retirer du stress test</button></div>';
   html += '</div></div>';
@@ -2056,7 +2338,106 @@ window.PSR = {
     l.status = newStatus;
     persist();
     render();
-    showToast('Statut : ' + statusLabel(newStatus));
+    var dp = docProgress(l);
+    if ((newStatus === 'negociation' || newStatus === 'acquis') && dp.done < dp.total) {
+      showToast('Statut : ' + statusLabel(newStatus) + ' — ATTENTION : ' + (dp.total - dp.done) + ' document(s) non vérifié(s) dans la checklist.');
+    } else {
+      showToast('Statut : ' + statusLabel(newStatus));
+    }
+  },
+
+  setConfidence: function(id, value) {
+    var l = findSaved(id);
+    if (!l) return;
+    l.dataConfidence = value;
+    persist();
+    render();
+    showToast('Confiance des données : ' + confidenceLabel(value));
+  },
+
+  openDocChecklist: function(id) { ui.modal = 'docChecklist'; ui.modalCtx = id; render(); },
+
+  toggleDocItem: function(listingId, itemId, checked) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    if (!l.docChecklist) l.docChecklist = {};
+    l.docChecklist[itemId] = checked ? { done: true, date: new Date().toISOString() } : { done: false, date: null };
+    persist();
+    render();
+  },
+
+  updateNextAction: function(listingId, field, value) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    if (!l.nextAction) l.nextAction = { date: '', label: '' };
+    l.nextAction[field] = value;
+    persist();
+    render();
+  },
+
+  openVerifyModal: function(id) { ui.modal = 'verifyListing'; ui.modalCtx = id; render(); },
+
+  copyVerifyPrompt: function(id) {
+    var l = findSaved(id);
+    if (!l) return;
+    var s = document.getElementById('verify-siren'); if (s) l.siren = s.value.trim();
+    var n = document.getElementById('verify-legalname'); if (n) l.legalName = n.value.trim();
+    persist();
+    try { navigator.clipboard.writeText(buildVerifyPrompt(l)); showToast('Demande copiée — colle-la dans le chat.'); } catch(e) { showToast('Copie impossible — sélectionne le texte manuellement.'); }
+  },
+
+  runVerifyAutomatically: function(id) {
+    var l = findSaved(id);
+    if (!l) return;
+    var s = document.getElementById('verify-siren'); if (s) l.siren = s.value.trim();
+    var n = document.getElementById('verify-legalname'); if (n) l.legalName = n.value.trim();
+    persist();
+    var statusEl = document.getElementById('psr-verify-status');
+    if (statusEl) statusEl.textContent = 'Vérification en cours (10-30 secondes)…';
+    sb.functions.invoke('ai-agent', { body: { action: 'verify', listing: {
+      siren: l.siren, legalName: l.legalName, name: l.name, sector: l.sector, location: l.location,
+      source: l.source, ref: l.ref, url: l.url, ca: l.ca, ebitda: l.ebitda, resultat: l.resultat, prix: l.prix
+    }, agentMemory: state.agentMemory || '' } }).then(function(res){
+      if (res.error) { var el = document.getElementById('psr-verify-status'); if (el) el.textContent = 'Erreur : ' + (res.error.message||res.error); return; }
+      if (res.data && res.data.error) { var el2 = document.getElementById('psr-verify-status'); if (el2) el2.textContent = 'Erreur : ' + res.data.error; return; }
+      var cleaned = (res.data && res.data.text || '').replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+      var parsed;
+      try { parsed = JSON.parse(cleaned); }
+      catch(e) { var el3 = document.getElementById('psr-verify-status'); if (el3) el3.textContent = 'Réponse non exploitable — réessaie ou utilise le mode manuel.'; return; }
+      l.verification = { result: parsed, date: new Date().toISOString() };
+      persist();
+      render();
+    }).catch(function(err){
+      var el = document.getElementById('psr-verify-status');
+      if (el) el.textContent = 'Erreur : ' + err.message;
+    });
+  },
+
+  applyVerifyResult: function(id) {
+    var l = findSaved(id);
+    if (!l) return;
+    var el = document.getElementById('psr-verify-paste-'+id);
+    if (!el) return;
+    var raw = el.value.trim();
+    if (!raw) { showToast('Colle d\'abord le bloc JSON.'); return; }
+    var cleaned = raw.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+    var parsed;
+    try { parsed = JSON.parse(cleaned); }
+    catch(e) { showToast('JSON invalide — vérifie que le bloc est complet.'); return; }
+    if (typeof parsed.identificationPossible === 'undefined' && !parsed.conclusion) { showToast('Ce JSON ne ressemble pas à un résultat de vérification.'); return; }
+    l.verification = { result: parsed, date: new Date().toISOString() };
+    persist();
+    render();
+    showToast('Résultat de vérification enregistré.');
+  },
+
+  markVerified: function(id) {
+    var l = findSaved(id);
+    if (!l) return;
+    l.dataConfidence = 'verifie';
+    persist();
+    render();
+    showToast('Données marquées comme vérifiées.');
   },
   selectDD: function(id) { ui.ddSelected = id; render(); },
   gotoDD: function(sourceId) { ui.tab = 'dd'; ui.groupFilter = null; ui.ddSelected = sourceId; render(); },
@@ -2145,7 +2526,7 @@ window.PSR = {
       name: p.name, sector: p.sector, location: p.location, source: p.source, ref: p.ref, url: p.url,
       ca: p.ca, ebitda: p.ebitda, resultat: p.resultat, prix: p.prix, multiple: p.multiple, pitch: p.pitch,
       salaireDirigeant: p.salaireDirigeant || '',
-      groups: [], status: 'a_qualifier', savedAt: new Date().toISOString()
+      groups: [], status: 'a_qualifier', dataConfidence: 'teaser', docChecklist: {}, nextAction: null, siren: '', legalName: '', verification: null, savedAt: new Date().toISOString()
     });
     persist();
     showToast('Annonce sauvegardée.');
@@ -2169,7 +2550,7 @@ window.PSR = {
       prix: document.getElementById('af-prix').value.trim(),
       salaireDirigeant: document.getElementById('af-salaire').value.trim(),
       pitch: document.getElementById('af-pitch').value.trim(),
-      groups: [], status: 'a_qualifier', savedAt: new Date().toISOString()
+      groups: [], status: 'a_qualifier', dataConfidence: 'teaser', docChecklist: {}, nextAction: null, siren: '', legalName: '', verification: null, savedAt: new Date().toISOString()
     });
     persist();
     ui.modal = null;
@@ -2226,7 +2607,7 @@ window.PSR = {
       prix: document.getElementById('imp-prix').value.trim(),
       salaireDirigeant: document.getElementById('imp-salaire').value.trim(),
       pitch: document.getElementById('imp-pitch').value.trim(),
-      groups: [], status: 'a_qualifier', savedAt: new Date().toISOString()
+      groups: [], status: 'a_qualifier', dataConfidence: 'teaser', docChecklist: {}, nextAction: null, siren: '', legalName: '', verification: null, savedAt: new Date().toISOString()
     });
     persist();
     ui.modal = null;
