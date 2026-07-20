@@ -319,11 +319,11 @@ var SEED_PROPOSALS = [
     ref: "V73696",
     url: "https://www.fusacq.com/vente-entreprise-fourniture-dequipements-hydrauliques-et-services-destines-a-la-maintenance-aeronautique-seine-et-marne,73696_fr_",
     lastChecked: "17/07/2026 — annonce active, mise à jour le 29/05/2026",
-    ca: "635 k€ (2025) · 660 k€ (2026 est.) · 690 k€ (2024)",
+    ca: "635 k€ (2025) · 660 k€ (2026 est.) · 690 k€ (2024)", caIsEstimate: true,
     ebitda: "≈130–160 k€ estimés (20–24 % du CA)",
     ebitdaIsEstimate: true,
-    resultat: "95 k€ (2026 est.) — a varié de 25 à 95 k€ sur 3 ans",
-    prix: "280 k€ hors trésorerie",
+    resultat: "95 k€ (2026 est.) — a varié de 25 à 95 k€ sur 3 ans", resultatIsEstimate: true,
+    prix: "280 k€ hors trésorerie", prixIsEstimate: false,
     prixDetail: "+ ≈351 k€ de trésorerie nette au bilan — apport mini. indiqué : 150 k€. Modalité de rachat (fonds de commerce ou titres) à clarifier avec le cédant.",
     multiple: "≈1,8–2,2x (estimé sur EBE estimé)",
     salaireDirigeant: null,
@@ -350,11 +350,11 @@ var SEED_PROPOSALS = [
     ref: "IDF262919A",
     url: "https://www.transentreprise.com/offres/fiche/IDF262919A/belle-entreprise-delectricite-btb-paris-19/ile-de-france/paris/paris",
     lastChecked: "17/07/2026 — annonce active (vérifiée à l'instant sur la liste Transentreprise Paris)",
-    ca: "776 k€ (2025)",
+    ca: "776 k€ (2025)", caIsEstimate: false,
     ebitda: "153 k€ — 19,7 % du CA",
     ebitdaIsEstimate: false,
-    resultat: "≈110–120 k€ estimés après IS",
-    prix: "445 000 €",
+    resultat: "≈110–120 k€ estimés après IS", resultatIsEstimate: true,
+    prix: "445 000 €", prixIsEstimate: false,
     prixDetail: "Fonds de commerce. Diagnostic Transmission + Évaluation réalisés par la CCI.",
     multiple: "2,91x l'EBE — sous la cible de 3x",
     salaireDirigeant: "54 k€ brut (2025) — mentionné dans la note de retraitement CCI, à normaliser dans le calcul de l'EBE",
@@ -382,11 +382,11 @@ var SEED_PROPOSALS = [
     ref: "N°18695",
     url: "https://www.cra.asso.fr/opportunite-reprise.aspx?num=18695",
     lastChecked: "17/07/2026 — annonce active (page consultée directement)",
-    ca: "699 443 €",
+    ca: "699 443 €", caIsEstimate: false,
     ebitda: "≈105–155 k€ estimés (15–22 % du CA)",
     ebitdaIsEstimate: true,
     resultat: "Non communiqué — à demander au dossier détaillé",
-    prix: "500 000 €",
+    prix: "500 000 €", prixIsEstimate: false,
     prixDetail: "Motif de cession : retraite. Peu de détail public au-delà de l'activité et des chiffres globaux.",
     multiple: "≈3,2x–4,8x (estimé) — probablement au-dessus de la cible 3x, à négocier",
     salaireDirigeant: null,
@@ -412,11 +412,11 @@ var SEED_PROPOSALS = [
     ref: "IDF259294A",
     url: "https://www.transentreprise.com/offres/fiche/IDF259294A/maintenance-et-installation-genie-climatique/ile-de-france/seine-et-marne/arrond-de-torcy",
     lastChecked: "17/07/2026 — annonce active (vérifiée à l'instant)",
-    ca: "949 978 € (2024)",
+    ca: "949 978 € (2024)", caIsEstimate: false,
     ebitda: "≈140–170 k€ estimés (15–18 % du CA)",
     ebitdaIsEstimate: true,
     resultat: "Non communiqué — à demander",
-    prix: "325 000 €",
+    prix: "325 000 €", prixIsEstimate: false,
     prixDetail: "Fonds de commerce hors stock. Pas de local à reprendre. 4 véhicules inclus. Diagnostic Transmission + Évaluation réalisés.",
     multiple: "≈1,9–2,3x (estimé) — bien sous la cible 3x",
     salaireDirigeant: null,
@@ -440,11 +440,11 @@ var SEED_PROPOSALS = [
     ref: "N°18747",
     url: "https://www.cra.asso.fr/opportunite-reprise.aspx?num=18747",
     lastChecked: "17/07/2026 — annonce active (page consultée directement)",
-    ca: "503 569 €",
+    ca: "503 569 €", caIsEstimate: false,
     ebitda: "≈140–160 k€ estimés (28–32 % du CA)",
     ebitdaIsEstimate: true,
     resultat: "Non communiqué — à demander",
-    prix: "700 000 €",
+    prix: "700 000 €", prixIsEstimate: false,
     prixDetail: "Motif de cession : changement de vie (pas un départ retraite). Charges décrites comme \"maîtrisées\", équipe stable.",
     multiple: "≈4,3x–5x (estimé) — AU-DESSUS de ta cible < 3x",
     salaireDirigeant: null,
@@ -1084,10 +1084,10 @@ function renderProposalCard(p) {
   html += '<div class="dossier-body">';
   html += '<div class="pitch">'+esc(p.pitch)+'</div>';
   html += '<div class="figures-grid">';
-  html += figureBlock('Chiffre d\'affaires', p.ca);
+  html += figureBlock('Chiffre d\'affaires'+(p.caIsEstimate?' (estimé)':''), p.ca);
   html += figureBlock('EBITDA'+(p.ebitdaIsEstimate?' (estimé)':''), p.ebitda);
-  html += figureBlock('Résultat net', p.resultat);
-  html += figureBlock('Prix indicatif', p.prix, p.prixDetail);
+  html += figureBlock('Résultat net'+(p.resultatIsEstimate?' (estimé)':''), p.resultat);
+  html += figureBlock('Prix indicatif'+(p.prixIsEstimate?' (estimé)':''), p.prix, p.prixDetail);
   html += figureBlock('Multiple', p.multiple);
   html += '</div>';
   html += renderCriteriaList(p.criteria);
@@ -1199,10 +1199,10 @@ function renderSavedCard(l) {
   html += '<div class="dossier-body">';
   if (l.pitch) html += '<div class="pitch">'+esc(l.pitch)+'</div>';
   html += '<div class="figures-grid">';
-  html += figureBlock('Chiffre d\'affaires', l.ca||'—');
-  html += figureBlock('EBITDA', l.ebitda||'—');
-  html += figureBlock('Résultat net', l.resultat||'—');
-  html += figureBlock('Prix indicatif', l.prix||'—');
+  html += figureBlock('Chiffre d\'affaires'+(l.caIsEstimate?' (estimé)':''), l.ca||'—');
+  html += figureBlock('EBITDA'+(l.ebitdaIsEstimate?' (estimé)':''), l.ebitda||'—');
+  html += figureBlock('Résultat net'+(l.resultatIsEstimate?' (estimé)':''), l.resultat||'—');
+  html += figureBlock('Prix indicatif'+(l.prixIsEstimate?' (estimé)':''), l.prix||'—');
   html += '</div>';
   if (l.salaireDirigeant) {
     html += '<div class="figures-grid" style="margin-top:-6px;margin-bottom:14px;">' + figureBlock('Salaire du dirigeant', l.salaireDirigeant) + '</div>';
@@ -1908,14 +1908,15 @@ function formatCriteriaForPrompt() {
 }
 
 var PROPOSAL_JSON_SCHEMA_HINT =
+  'RÈGLE ABSOLUE : ne devine et n\'invente jamais un chiffre. Si une donnée n\'est pas dans la source, écris "non communiqué" plutôt qu\'un chiffre plausible. Toute valeur déduite plutôt que directement lue doit avoir son flag *IsEstimate à true — un "je ne sais pas" honnête vaut mieux qu\'une invention.\n' +
   'Réponds avec UNIQUEMENT un bloc ```json contenant un tableau de 5 propositions, ce schéma exact par élément (types respectés, "null" si inconnu) :\n' +
   '[{\n' +
   '  "id": "p1", "topPick": false,\n' +
   '  "name": "...", "sector": "...", "location": "...",\n' +
   '  "source": "Fusacq | Transentreprise | CRA | ...", "ref": "...", "url": "...",\n' +
   '  "lastChecked": "JJ/MM/AAAA — annonce active",\n' +
-  '  "ca": "...", "ebitda": "...", "ebitdaIsEstimate": true,\n' +
-  '  "resultat": "...", "prix": "...", "prixDetail": "...", "multiple": "...",\n' +
+  '  "ca": "...", "caIsEstimate": false, "ebitda": "...", "ebitdaIsEstimate": true,\n' +
+  '  "resultat": "...", "resultatIsEstimate": false, "prix": "...", "prixIsEstimate": false, "prixDetail": "...", "multiple": "...",\n' +
   '  "salaireDirigeant": "... ou null si non communiqué",\n' +
   '  "pitch": "...",\n' +
   '  "criteria": [\n' +
@@ -2524,7 +2525,11 @@ window.PSR = {
     state.savedListings.push({
       id: uid('sl'), sourceId: p.id, manual: false,
       name: p.name, sector: p.sector, location: p.location, source: p.source, ref: p.ref, url: p.url,
-      ca: p.ca, ebitda: p.ebitda, resultat: p.resultat, prix: p.prix, multiple: p.multiple, pitch: p.pitch,
+      ca: p.ca, caIsEstimate: !!p.caIsEstimate,
+      ebitda: p.ebitda, ebitdaIsEstimate: !!p.ebitdaIsEstimate,
+      resultat: p.resultat, resultatIsEstimate: !!p.resultatIsEstimate,
+      prix: p.prix, prixIsEstimate: !!p.prixIsEstimate,
+      multiple: p.multiple, pitch: p.pitch,
       salaireDirigeant: p.salaireDirigeant || '',
       groups: [], status: 'a_qualifier', dataConfidence: 'teaser', docChecklist: {}, nextAction: null, siren: '', legalName: '', verification: null, savedAt: new Date().toISOString()
     });
