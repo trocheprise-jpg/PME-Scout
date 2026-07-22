@@ -806,11 +806,16 @@ function freshDefaultState() {
     financingData: {},
     customDD: {},
     ddAddenda: {},
+    lastScanStats: null,
+    cronEnabled: false,
+    lastCronRun: null,
+    negoPlans: {},
+    plans100: {},
     agentMemory: "Priorise les cédants proches de la retraite (transmission plus simple, moins de tension de négo). Vérifie la concentration client en priorité avant tout NDA — c'est le point qui a fait le plus souvent défaut jusqu'ici. Le montage cible 0 % d'apport personnel (trésorerie cible + crédit vendeur + dette bancaire). Objectif : prix d'achat < 3x le résultat annuel. Signale clairement quand un dossier dépasse cette cible plutôt que de l'écarter silencieusement."
   };
 }
 var state = freshDefaultState();
-var ui = { tab: 'recherche', modal: null, modalCtx: null, groupFilter: null, statusFilter: null, ddSelected: null, toast: null };
+var ui = { tab: 'recherche', modal: null, modalCtx: null, groupFilter: null, statusFilter: null, ddSelected: null, toast: null, sortMode: 'recent' };
 
 var STATUS_OPTIONS = [
   { id: 'a_qualifier', label: 'À qualifier' },
@@ -967,7 +972,19 @@ function allExcludedMatchKeys() {
 }
 function visibleProposals() {
   var excludedKeys = allExcludedMatchKeys();
-  return state.currentProposals.filter(function(p){ return excludedKeys.indexOf(p.ref) === -1 && excludedKeys.indexOf(p.id) === -1; });
+  var list = state.currentProposals.filter(function(p){ return excludedKeys.indexOf(p.ref) === -1 && excludedKeys.indexOf(p.id) === -1; });
+  function okCount(p) { return (p.criteria||[]).filter(function(c){ return c.status === 'ok'; }).length; }
+  function prixNum(p) { var n = parseNumberLoose(p.prix); return n > 0 ? n : Infinity; } /* prix NC → en fin de liste */
+  function addedTs(p) { return p.addedAt ? Date.parse(p.addedAt) || 0 : 0; }
+  var sorted = list.slice();
+  if (ui.sortMode === 'score') {
+    sorted.sort(function(a,b){ return okCount(b) - okCount(a) || prixNum(a) - prixNum(b); });
+  } else if (ui.sortMode === 'prix') {
+    sorted.sort(function(a,b){ return prixNum(a) - prixNum(b) || okCount(b) - okCount(a); });
+  } else {
+    sorted.sort(function(a,b){ return addedTs(b) - addedTs(a); }); /* plus récentes d'abord, seed (sans date) en fin */
+  }
+  return sorted;
 }
 
 /* ============================= RENDER: SHELL ============================= */
@@ -1015,20 +1032,57 @@ function viewRecherche() {
   html += '<div class="eyebrow">Étape 1</div>';
   html += '<h2 class="section-title">Lancer une recherche</h2>';
   html += '<button class="btn-link" style="font-size:12px;margin-bottom:10px;" onclick="PSR.openModal(\'editCriteria\')">⚙ Modifier les caractéristiques de recherche</button>';
-  html += '<p class="section-sub">Sourcing sur Fusacq, Transentreprise (CCI/CMA IDF), C.R.A et Bpifrance Transmission — cible '+esc(state.searchCriteria.zone)+', CA '+esc(state.searchCriteria.caMin)+'–'+esc(state.searchCriteria.caMax)+', profil "belle endormie".</p>';
-  html += '<div class="info-banner"><b>Comment ça marche concrètement :</b> je ne peux pas déclencher moi-même une recherche depuis cette page — un artefact ne peut pas m\'appeler en direct (on l\'a déjà vérifié ensemble). Le bouton ci-dessous copie automatiquement un message dans ton presse-papier et enregistre ta demande. Colle-le-moi dans le chat, je fais la recherche réelle, puis je te redonne un bloc à coller ici pour remplacer les 5 propositions — en un clic, sans réécrire quoi que ce soit.</div>';
+  html += '<p class="section-sub">Sourcing — cible '+esc(state.searchCriteria.zone)+', CA '+esc(state.searchCriteria.caMin)+'–'+esc(state.searchCriteria.caMax)+', profil "belle endormie".</p>';
+  html += '<div class="info-banner"><b>Deux modes de sourcing :</b><br>'
+    + '<b>1. Scan direct des plateformes (recommandé)</b> — le serveur va lire lui-même, en direct, les listes publiques de <b>Transentreprise</b> (CCI/CMA, ~10 pages IDF) et du <b>C.R.A</b> (~5 pages IDF), pré-filtre par CA, ouvre les fiches des candidats et les analyse selon tes 5 critères. Données lues à la source, pas via Google.<br>'
+    + '<b>2. Recherche web</b> — analyse via les moteurs de recherche, utile pour <b>Fusacq</b> (dont les règles du site interdisent le crawl automatisé — je respecte cette limite : ses annonces sont couvertes via l\'index des moteurs et via l\'import d\'URL au cas par cas), Cession PME et Bpifrance Transmission.<br>'
+    + '<b>3. Scan quotidien automatique</b> — chaque matin vers 6h15, le serveur rescanne les plateformes avec tes caractéristiques enregistrées, <b>ajoute</b> les nouvelles annonces conformes et <b>retire</b> les annonces qui ne sont plus en ligne (les annonces sauvegardées ne sont jamais supprimées : elles sont marquées "retirée du site").<br>'
+    + 'Les résultats se <b>cumulent</b> sans doublons ; la zone géographique et la fenêtre de CA viennent des caractéristiques enregistrées (⚙ ci-dessus) — zones reconnues pour le scan direct : Île-de-France, Nord-Pas-de-Calais, Hauts-de-France. Les annonces que tu as supprimées sont exclues de tous les modes.</div>';
 
   html += '<div class="launch-box">';
   html += '<label style="font-weight:600;font-size:12.5px;display:block;margin-bottom:6px;">Instructions complémentaires (optionnel) — nouvelle zone géographique, secteur particulier, taille cible différente…</label>';
   html += '<textarea class="guidance" id="psr-guidance" placeholder="Ex : élargis à Nord-Pas-de-Calais, secteur maintenance industrielle uniquement, CA jusqu\'à 2M€…"></textarea>';
   html += '<div class="launch-row">';
-  html += '<button class="btn-brass" onclick="PSR.launchSearch()">Lancer la recherche</button>';
+  html += '<button class="btn-brass" id="psr-scan-btn" onclick="PSR.launchScan()">🛰 Scan direct des plateformes</button>';
+  html += '<button class="btn-outline" onclick="PSR.launchSearch()">Recherche web (Fusacq & autres)</button>';
   html += '<span style="font-size:11.5px;color:var(--slate);">'+state.searchRequests.length+' demande(s) enregistrée(s) au total</span>';
-  html += '</div></div>';
+  html += '</div>';
+  html += '<div id="psr-scan-status" class="fin-note" style="margin-top:8px;"></div>';
+  html += '<div style="margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
+  if (state.cronEnabled) {
+    html += '<button class="btn-outline" onclick="PSR.toggleCron()">⏰ Désactiver le scan quotidien</button>';
+    html += '<span style="font-size:11.5px;color:var(--slate);">Actif — chaque jour vers 6h15 (heure de Paris), selon les caractéristiques enregistrées.</span>';
+  } else {
+    html += '<button class="btn-outline" onclick="PSR.toggleCron()">⏰ Lancer le scan quotidien</button>';
+    html += '<span style="font-size:11.5px;color:var(--slate);">Inactif — aucune recherche automatique ne tourne.</span>';
+  }
+  html += '<button class="btn-link" style="font-size:11.5px;" onclick="PSR.reloadState()">↻ Recharger les données</button>';
+  html += '</div>';
+  if (state.lastCronRun) {
+    var cr = state.lastCronRun;
+    html += '<div style="margin-top:6px;font-size:11.5px;color:var(--slate);"><b>Dernier scan quotidien ('+esc(formatDateFr(cr.date))+') :</b> '
+      + cr.added + ' annonce(s) ajoutée(s) · ' + cr.pruned + ' proposition(s) retirée(s) (plus en ligne) · ' + cr.flaggedSaved + ' annonce(s) sauvegardée(s) marquée(s) "retirée du site"'
+      + (cr.error ? '<br><span style="color:var(--danger,#b00020);">Erreur : ' + esc(cr.error) + '</span>' : '') + '</div>';
+  }
+  if (state.lastScanStats) {
+    var ss = state.lastScanStats;
+    var srcTxt = (ss.sources||[]).map(function(s){ return s.name+' : '+s.listingsFound+' annonces IDF vues ('+s.pagesFetched+' pages), '+s.candidates+' dans la fenêtre de CA'; }).join(' · ');
+    html += '<div style="margin-top:8px;font-size:11.5px;color:var(--slate);border-top:1px dashed var(--line);padding-top:8px;"><b>Dernier scan ('+esc(formatDateFr(ss.date))+') :</b> '+esc(srcTxt)+' · '+ss.detailsFetched+' fiches détaillées analysées.'
+      + ((ss.notes&&ss.notes.length)?'<br>'+esc(ss.notes.join(' ')):'') +'</div>';
+  }
+  html += '</div>';
 
-  html += '<div class="eyebrow" style="margin-top:8px;">Résultat de la dernière analyse</div>';
-  html += '<h2 class="section-title">'+list.length+' proposition'+(list.length>1?'s':'')+'</h2>';
-  html += '<p class="section-sub">Vérifiées en ligne le '+esc(formatDateFr(state.currentProposalsUpdatedAt))+' — aucune annonce expirée dans cette sélection. Les annonces que tu as supprimées n\'apparaissent plus jamais ici, même après une nouvelle recherche.</p>';
+  html += '<div class="eyebrow" style="margin-top:8px;">Propositions cumulées</div>';
+  html += '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;">';
+  html += '<h2 class="section-title" style="margin-bottom:0;">'+list.length+' proposition'+(list.length>1?'s':'')+'</h2>';
+  html += '<label style="font-size:12px;color:var(--slate);">Trier par '
+    + '<select onchange="PSR.setSortMode(this.value)" style="font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;">'
+    + '<option value="recent"'+(ui.sortMode==='recent'?' selected':'')+'>Plus récentes</option>'
+    + '<option value="score"'+(ui.sortMode==='score'?' selected':'')+'>Pertinence (critères sur 5)</option>'
+    + '<option value="prix"'+(ui.sortMode==='prix'?' selected':'')+'>Prix de vente (croissant)</option>'
+    + '</select></label>';
+  html += '</div>';
+  html += '<p class="section-sub">Dernière mise à jour le '+esc(formatDateFr(state.currentProposalsUpdatedAt))+'. Les résultats de chaque scan et recherche s\'ajoutent ici sans doublons ; le scan quotidien retire automatiquement les annonces qui ne sont plus en ligne. Les annonces que tu as supprimées ne réapparaissent jamais.</p>';
 
   if (list.length === 0) {
     html += '<div class="empty-state"><span class="serif">Aucune proposition disponible</span>Toutes les propositions connues ont été écartées. Lance une nouvelle recherche.</div>';
@@ -1176,6 +1230,9 @@ function renderSavedCard(l) {
   html += '<div class="dossier-ref mono">'+esc(l.source||'Ajout manuel')+(l.ref?(' · Réf. '+esc(l.ref)):'')+'</div>';
   html += '<div class="dossier-title">'+esc(l.name)+'</div>';
   html += '<div class="dossier-loc">'+esc(l.sector||'')+(l.location?(' — '+esc(l.location)):'')+'</div>';
+  if (l.offline) {
+    html += '<div style="margin-top:4px;"><span class="chip chip-warn">⚠ ANNONCE RETIRÉE DU SITE'+(l.offlineDate?(' — constaté le '+esc(formatDateFr(l.offlineDate))):'')+'</span> <span style="font-size:10.5px;color:var(--slate);">Vendue, retirée ou déplacée — le dossier et la DD sont conservés, à toi de décider.</span></div>';
+  }
   html += '</div>';
   html += '<select class="status-select status-'+st+'" onchange="PSR.updateStatus(\''+l.id+'\',this.value)">';
   STATUS_OPTIONS.forEach(function(o){ html += '<option value="'+o.id+'" '+(o.id===st?'selected':'')+'>'+esc(o.label)+'</option>'; });
@@ -1232,8 +1289,12 @@ function renderSavedCard(l) {
   html += '<div class="dossier-actions">';
   if (getDD(l.sourceId)) {
     html += '<button class="btn-brass btn-sm" onclick="PSR.gotoDD(\''+l.sourceId+'\')">Voir la Due Diligence</button>';
+    html += '<button class="btn-outline btn-sm" onclick="PSR.openPlan(\''+l.id+'\',\'nego\')">'+(state.negoPlans[l.sourceId]?'✓ ':'')+'Plan de négociation</button>';
   } else {
     html += '<button class="btn-outline btn-sm" onclick="PSR.requestDD(\''+l.id+'\')">Demander une Due Diligence</button>';
+  }
+  if (l.status === 'negociation' || l.status === 'acquis') {
+    html += '<button class="btn-outline btn-sm" onclick="PSR.openPlan(\''+l.id+'\',\'plan100\')">'+(state.plans100[l.sourceId]?'✓ ':'')+'Plan 100 jours & gérant</button>';
   }
   html += '<button class="btn-outline btn-sm" onclick="PSR.toggleCompareSelection(\''+l.id+'\')">'+(state.comparisonSelection.indexOf(l.id)!==-1?'✓ Dans la comparaison':'Ajouter à la comparaison')+'</button>';
   html += '<button class="btn-outline btn-sm" onclick="PSR.toggleFinancingSelection(\''+l.id+'\')">'+(state.financingSelection.indexOf(l.id)!==-1?'✓ Dans le stress test':'Ajouter au stress test')+'</button>';
@@ -1326,7 +1387,11 @@ function renderDDDoc(sourceId) {
     html += '</div>';
   });
 
-  html += '<div class="dossier-actions" style="margin-top:8px;"><button class="btn-outline btn-sm" onclick="PSR.requestDeepenDD(\''+sourceId+'\')">Approfondir la Due Diligence</button></div>';
+  html += '<div class="dossier-actions" style="margin-top:8px;">';
+  html += '<button class="btn-outline btn-sm" onclick="PSR.requestDeepenDD(\''+sourceId+'\')">Approfondir la Due Diligence</button>';
+  var savedForDD = state.savedListings.find(function(x){return x.sourceId===sourceId;});
+  if (savedForDD) html += '<button class="btn-outline btn-sm" onclick="PSR.openPlan(\''+savedForDD.id+'\',\'nego\')">'+(state.negoPlans[sourceId]?'✓ ':'')+'Plan de négociation</button>';
+  html += '</div>';
   html += renderQABox(sourceId, 'dd');
   html += '</div>';
   return html;
@@ -1534,7 +1599,28 @@ function viewCompare() {
 
 /* ============================= MODALS ============================= */
 
-var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true, importListing: true, verifyListing: true, docChecklist: true };
+var WIDE_MODALS = { editCriteria: true, searchPrepared: true, requestDD: true, deepenDD: true, importListing: true, verifyListing: true, docChecklist: true, negoPlan: true, plan100: true };
+
+function modalPlanDoc(listingId, kind) {
+  var l = findSaved(listingId);
+  if (!l) return '<div class="modal-title">Dossier introuvable</div>';
+  var store = kind === 'nego' ? state.negoPlans : state.plans100;
+  var saved = store[l.sourceId];
+  var title = kind === 'nego' ? 'Plan de négociation' : 'Plan des 100 premiers jours & cadrage du gérant';
+  var html = '<div class="modal-title">'+title+' — '+esc(l.name)+'</div>';
+  if (saved && saved.text) {
+    html += '<div class="modal-sub">Généré le '+esc(formatDateFr(saved.date))+'. Basé sur les données du dossier'+(getDD(l.sourceId)?', la due diligence':'')+' et ton système de financement/pilotage.</div>';
+    html += '<div style="background:var(--paper);border:1px solid var(--line-strong);border-radius:6px;padding:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;max-height:55vh;overflow-y:auto;">'+esc(saved.text)+'</div>';
+    html += '<div class="modal-actions" style="margin-top:12px;"><button class="btn-outline btn-sm" onclick="PSR.generatePlan(\''+listingId+'\',\''+kind+'\')">↻ Régénérer</button></div>';
+  } else {
+    html += '<div class="modal-sub">'+(kind==='nego'
+      ? 'Je vais préparer : ancrage & fourchette de prix justifiée, un argument de décote chiffré par point de vigilance de la DD, structuration (crédit vendeur, earnout, GAP), concessions à faible coût, BATNA, et le script de la première rencontre avec le cédant.'
+      : 'Je vais préparer : sécurisation semaines 1-2, audit terrain des écarts DD vs réalité, quick wins cash mois 2-3, fiche de poste + KPI variables du gérant, tableau de bord des réunions quotidiennes, et les jalons de passage en suivi hebdo puis trimestriel.')+'</div>';
+    html += '<div class="agent-box"><button class="btn-primary" onclick="PSR.generatePlan(\''+listingId+'\',\''+kind+'\')">🤖 Générer maintenant</button>';
+    html += '<div id="psr-plan-status" class="fin-note" style="margin-top:6px;">Utilise ta clé API Anthropic configurée sur Supabase ('+(kind==='nego'?'20-40':'15-30')+' secondes).</div></div>';
+  }
+  return html;
+}
 
 function renderModal() {
   var root = document.getElementById('psr-modal-root');
@@ -1555,6 +1641,8 @@ function renderModal() {
   else if (ui.modal === 'docChecklist') html += modalDocChecklist(ui.modalCtx);
   else if (ui.modal === 'questionPrepared') html += modalQuestionPrepared(ui.modalCtx);
   else if (ui.modal === 'searchPrepared') html += modalSearchPrepared(ui.modalCtx);
+  else if (ui.modal === 'negoPlan') html += modalPlanDoc(ui.modalCtx, 'nego');
+  else if (ui.modal === 'plan100') html += modalPlanDoc(ui.modalCtx, 'plan100');
   else if (ui.modal === 'editCriteria') html += modalEditCriteria();
 
   html += '</div></div>';
@@ -1937,6 +2025,13 @@ function buildSearchPrompt(guidance, excludedLines) {
   return parts.join("\n");
 }
 
+function buildScanPrompt(guidance) {
+  var parts = ["Analyse le corpus d'annonces fourni ci-dessous (récupéré en direct sur les plateformes) et sélectionne les meilleures cibles.", "", formatCriteriaForPrompt()];
+  if (guidance) parts.push("", "Instructions complémentaires : " + guidance);
+  parts.push("", PROPOSAL_JSON_SCHEMA_HINT.replace('un tableau de 5 propositions', 'un tableau de 1 à 5 propositions (uniquement celles réellement défendables — mieux vaut 2 bonnes propositions que 5 tièdes)'));
+  return parts.join("\n");
+}
+
 /* ============================= FINANCEMENT & STRESS TEST — moteur de calcul ============================= */
 /* Réplique fidèle des 3 onglets de "Tableau d'analyse et calculateur automatique de valorisation" :
    Input | FINANCEMENT & CASHFLOW | STRESS TEST — mêmes formules (PMT Excel, EBE retraité, scénarios).
@@ -2265,19 +2360,69 @@ function applyProposalsFromText(raw) {
   if (!Array.isArray(parsed) || parsed.length === 0) { showToast('Le JSON doit être un tableau de propositions.'); return false; }
   var valid = parsed.every(function(p){ return p && p.id && p.name && Array.isArray(p.criteria); });
   if (!valid) { showToast('Chaque proposition doit au moins avoir id, name et criteria.'); return false; }
-  state.currentProposals = parsed;
+  /* Cumul + dédoublonnage : les nouvelles annonces s'AJOUTENT aux existantes.
+     Clé de correspondance : URL, puis source|réf, puis réf seule. Une annonce déjà présente
+     est mise à jour avec les données fraîches (mêmes id/statut conservés), jamais dupliquée. */
+  var excludedKeys = allExcludedMatchKeys();
+  function pKeys(p) {
+    var ks = [];
+    if (p.url) ks.push(String(p.url));
+    if (p.source && p.ref) ks.push(p.source + '|' + p.ref);
+    if (p.ref) { ks.push(String(p.ref)); ks.push(String(p.ref).replace('N°','')); }
+    return ks;
+  }
+  var index = {};
+  state.currentProposals.forEach(function(p, i){ pKeys(p).forEach(function(k){ if (!(k in index)) index[k] = i; }); });
+  var added = 0, updated = 0, skippedExcluded = 0;
+  var now = Date.now();
+  parsed.forEach(function(p, n){
+    var keys = pKeys(p);
+    if (keys.some(function(k){ return excludedKeys.indexOf(k) !== -1; }) || excludedKeys.indexOf(p.id) !== -1) { skippedExcluded++; return; }
+    var hit = null;
+    keys.some(function(k){ if (k in index) { hit = index[k]; return true; } return false; });
+    if (hit !== null) {
+      var oldId = state.currentProposals[hit].id;
+      var oldTop = state.currentProposals[hit].topPick;
+      state.currentProposals[hit] = p;
+      state.currentProposals[hit].id = oldId;
+      if (oldTop && !p.topPick) state.currentProposals[hit].topPick = true;
+      updated++;
+    } else {
+      p.id = 'p' + now + '-' + n;
+      p.addedAt = new Date().toISOString();
+      state.currentProposals.push(p);
+      var idx = state.currentProposals.length - 1;
+      keys.forEach(function(k){ if (!(k in index)) index[k] = idx; });
+      added++;
+    }
+  });
   state.currentProposalsUpdatedAt = new Date().toISOString();
   persist();
   ui.modal = null;
   ui.tab = 'recherche';
-  showToast(parsed.length + ' nouvelle(s) proposition(s) chargée(s).');
+  var msg = added + ' nouvelle(s), ' + updated + ' mise(s) à jour';
+  if (skippedExcluded) msg += ', ' + skippedExcluded + ' ignorée(s) (déjà écartée(s))';
+  showToast(msg + '.');
   render();
   return true;
 }
 
+/* supabase-js masque le corps d'erreur derrière "Edge Function returned a non-2xx status code" :
+   on va lire la vraie réponse du serveur (error.context) pour afficher un message actionnable. */
+async function fnErrorMessage(err) {
+  var generic = (err && err.message) || String(err);
+  try {
+    if (err && err.context && typeof err.context.json === 'function') {
+      var body = await err.context.json();
+      if (body && body.error) return body.error;
+    }
+  } catch(e) { /* corps illisible, on garde le message générique */ }
+  return generic;
+}
+
 async function callAgent(action, prompt) {
   var res = await sb.functions.invoke('ai-agent', { body: { action: action, prompt: prompt, agentMemory: state.agentMemory || '' } });
-  if (res.error) { throw new Error(res.error.message || String(res.error)); }
+  if (res.error) { throw new Error(await fnErrorMessage(res.error)); }
   if (res.data && res.data.error) { throw new Error(res.data.error); }
   return res.data && res.data.text;
 }
@@ -2465,6 +2610,55 @@ window.PSR = {
     var text = buildSearchPrompt(guidance, excluded);
     try { navigator.clipboard.writeText(text); } catch(e) {}
     ui.modal = 'searchPrepared'; ui.modalCtx = { text: text };
+    render();
+  },
+
+  launchScan: function() {
+    var guidance = document.getElementById('psr-guidance').value.trim();
+    state.searchRequests.push({ date: new Date().toISOString(), guidance: guidance, mode: 'scan' });
+    persist();
+    var btn = document.getElementById('psr-scan-btn');
+    var statusEl = document.getElementById('psr-scan-status');
+    if (btn) btn.disabled = true;
+    if (statusEl) statusEl.textContent = 'Scan en cours — lecture des listes Transentreprise et CRA, ouverture des fiches candidates, puis analyse (45-90 secondes)…';
+    var excludedRefs = allExcludedMatchKeys();
+    var prompt = buildScanPrompt(guidance);
+    sb.functions.invoke('ai-agent', { body: {
+      action: 'scan', prompt: prompt, excludedRefs: excludedRefs, agentMemory: state.agentMemory || '',
+      caMin: state.searchCriteria.caMin, caMax: state.searchCriteria.caMax
+      /* zones : détectées côté serveur à partir du prompt (champ Zone des critères + instructions complémentaires) */
+    } }).then(async function(res){
+      if (btn) btn.disabled = false;
+      if (res.error) { var msg = await fnErrorMessage(res.error); if (statusEl) statusEl.textContent = 'Erreur : ' + msg; return; }
+      if (res.data && res.data.error) { if (statusEl) statusEl.textContent = 'Erreur : ' + res.data.error; return; }
+      if (res.data && res.data.scanStats) {
+        state.lastScanStats = res.data.scanStats;
+        state.lastScanStats.date = new Date().toISOString();
+      }
+      var ok = applyProposalsFromText(res.data && res.data.text || '');
+      if (!ok) { if (statusEl) statusEl.textContent = 'Réponse reçue mais non exploitable — réessaie, ou utilise la Recherche web en secours.'; persist(); render(); }
+    }).catch(function(err){
+      if (btn) btn.disabled = false;
+      if (statusEl) statusEl.textContent = 'Erreur : ' + err.message;
+    });
+  },
+
+  toggleCron: function() {
+    state.cronEnabled = !state.cronEnabled;
+    persist();
+    showToast(state.cronEnabled
+      ? 'Scan quotidien activé — première exécution demain vers 6h15 (heure de Paris).'
+      : 'Scan quotidien désactivé.');
+    render();
+  },
+
+  reloadState: function() {
+    if (!currentUser) return;
+    loadUserData().then(function(){ showToast('Données rechargées.'); });
+  },
+
+  setSortMode: function(mode) {
+    ui.sortMode = mode;
     render();
   },
 
@@ -2723,6 +2917,52 @@ window.PSR = {
       render();
     }).catch(function(err){
       var el = document.getElementById('psr-auto-status-q-'+key+'-'+idx);
+      if (el) el.textContent = 'Erreur : ' + err.message;
+    });
+  },
+
+  openPlan: function(listingId, kind) {
+    ui.modal = kind === 'nego' ? 'negoPlan' : 'plan100';
+    ui.modalCtx = listingId;
+    render();
+  },
+
+  generatePlan: function(listingId, kind) {
+    var l = findSaved(listingId);
+    if (!l) return;
+    var statusEl = document.getElementById('psr-plan-status');
+    if (statusEl) statusEl.textContent = 'Génération en cours…';
+    var parts = [];
+    parts.push('Dossier : ' + l.name + ' (' + (l.sector||'secteur non précisé') + ', ' + (l.location||'—') + ')');
+    parts.push('Source : ' + (l.source||'—') + (l.ref ? ' / Réf. ' + l.ref : '') + (l.url ? ' / ' + l.url : ''));
+    parts.push('Chiffres du dossier — CA : ' + (l.ca||'non communiqué') + ' | EBITDA/EBE : ' + (l.ebitda||'non communiqué') + ' | Résultat net : ' + (l.resultat||'non communiqué') + ' | Prix demandé : ' + (l.prix||'non communiqué') + ' | Rémunération dirigeant : ' + (l.salaireDirigeant||'non communiquée'));
+    if (l.pitch) parts.push('Description : ' + l.pitch);
+    var dd = getEffectiveDD(l.sourceId);
+    if (dd) {
+      parts.push('');
+      parts.push('Verdict de la due diligence : ' + dd.verdict);
+      var vig = [];
+      (dd.sections||[]).forEach(function(s){ (s.vigilanceTable||[]).forEach(function(v){ vig.push('- ['+v.level+'] '+v.label+' : '+v.note); }); });
+      if (vig.length) { parts.push('Points de vigilance identifiés en DD :'); parts.push(vig.join('\n')); }
+    } else {
+      parts.push('');
+      parts.push('Aucune due diligence complète encore réalisée sur ce dossier — signale les points où ton plan restera provisoire tant que la DD ne les a pas confirmés.');
+    }
+    var fd = state.financingData[l.id];
+    if (fd) {
+      parts.push('');
+      parts.push('Données de financement saisies — Trésorerie cible : ' + (fd.tresorerie||0) + ' € | Dettes existantes : ' + (fd.dettesExistantes||0) + ' € | Rému dirigeant actuelle : ' + (fd.remuActuelle||0) + ' € | Rému gérant marché : ' + (fd.remuMarche||0) + ' €');
+    }
+    parts.push('');
+    parts.push('Mon système (à respecter) : ' + state.searchCriteria.objectif + ' | Financement : ' + state.searchCriteria.financement + ' | Pilotage : ' + state.searchCriteria.pilotage + ' | Développement : ' + state.searchCriteria.developpement);
+    var prompt = parts.join('\n');
+    callAgent(kind === 'nego' ? 'nego' : 'plan100', prompt).then(function(text){
+      var store = kind === 'nego' ? state.negoPlans : state.plans100;
+      store[l.sourceId] = { text: text, date: new Date().toISOString() };
+      persist();
+      render();
+    }).catch(function(err){
+      var el = document.getElementById('psr-plan-status');
       if (el) el.textContent = 'Erreur : ' + err.message;
     });
   },
